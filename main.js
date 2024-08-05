@@ -333,3 +333,10 @@ function dealerPlays() {
     renderHands();
     checkForEndOfGame();
 }
+
+
+// event listeners for modified actions 
+
+document.getElementById('hit-button').addEventListener('click', handleHit);
+document.getElementById('stand-button').addEventListener('click', handleStand);
+document.getElementById('reset-button').addEventListener('click', startGame);
