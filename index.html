@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blackjack 21</title>
+    <title>Blackjack Game</title>
+    <link rel="stylesheet" href="css/main.css">
     <script defer src="js/main.js"></script>
-    <link rel="stylesheet" href="main.css">
 </head>
 <body>
     <h1>Blackjack Game</h1>
     <div id="game-area">
+        <div id="deck-area">
+            <h2>Deck</h2>
+            <div id="deck-container" class="card-container"></div>
+        </div>
         <div id="dealer-area">
             <h2>Dealer's Hand</h2>
             <div id="dealer-cards" class="card-container"></div>
@@ -24,35 +28,12 @@
             <button id="reset-button">Reset</button>
         </div>
         <div id="status"></div>
+        <div id="betting">
+            <h3>Place Your Bet</h3>
+            <input type="number" id="bet-amount" min="1" placeholder="Enter bet amount">
+            <button id="place-bet">Place Bet</button>
+            <div id="balance">Balance: $1000</div>
+        </div>
     </div>
-    <!-- betting functionality  -->
-    <div id="betting">
-        <h3>Place Your Bet</h3>
-        <input type="number" id="bet-amount" min="1" placeholder="Enter bet amount">
-        <button id="place-bet">Place Bet</button>
-        <div id="balance">Balance: $1000</div>
-    </div>
-    <div id="dealer-area">
-<h2>Dealer's Hand</h2>
-<div id="dealer-cards" class="card-container"></div>
-</div>
-<div id="player-area">
-<h2>Your Hand</h2>
-<div id="player-cards" class="card-container"></div>
-</div>
-<!-- adding card images -->
-<div id="dealer-area">
-<h2>Dealer's Hand</h2>
-<div id="dealer-cards" class="card-container"></div>
-</div>
-<div id="player-area">
-<h2>Your Hand</h2>
-<div id="player-cards" class="card-container"></div>
-</div>
-
-</div>
 </body>
 </html>
-</body>
-</html>
-        

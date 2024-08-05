@@ -3,6 +3,8 @@ body {
     text-align: center;
     background-color: #2e7d32;
     color: #fff;
+    margin: 0;
+    padding: 0;
 }
 
 #game-area {
@@ -10,54 +12,21 @@ body {
     margin-top: 20px;
 }
 
-#dealer-area, #player-area {
+#deck-area, #dealer-area, #players-area {
     margin-bottom: 20px;
 }
 
-#dealer-cards, #player-cards {
-    border: 1px solid #fff;
-    padding: 10px;
-    min-height: 100px;
-}
-
-#controls {
-    margin-top: 20px;
-}
-
-button {
-    margin: 5px;
-    padding: 10px 20px;
-    font-size: 16px;
-}
-
-
-
-
-/* adding style to imgs tp cards */
 .card-container {
     display: flex;
-    justify-content: center;
     gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .card-container img {
     width: 100px;
     height: 140px;
 }
-
-
-/* animated card dealing */
-
-@keyframes dealCard {
-    from { opacity: 0; transform: scale(0); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-.card-container img {
-    animation: dealCard 0.5s ease;
-}
-
-/* supporting multiple players */
 
 #players-container {
     display: flex;
@@ -69,14 +38,65 @@ button {
     border: 1px solid #fff;
     padding: 10px;
     margin-bottom: 10px;
+    background-color: #388e3c;
+    border-radius: 8px;
 }
 
-.card-container {
-    display: flex;
-    gap: 10px;
+#controls {
+    margin-top: 20px;
 }
 
-.card-container img {
-    width: 100px;
-    height: 140px;
+button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #fff;
+    color: #2e7d32;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #e0e0e0;
+}
+
+#status {
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#betting {
+    margin-top: 20px;
+    background-color: #388e3c;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+#betting input {
+    padding: 5px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+#betting button {
+    padding: 5px 10px;
+    font-size: 16px;
+    background-color: #fff;
+    color: #2e7d32;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#betting button:hover {
+    background-color: #e0e0e0;
+}
+
+#balance {
+    font-size: 18px;
+    margin-top: 10px;
 }

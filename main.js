@@ -1,10 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const deck = [];
     const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
     const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-    let playerHand = [];
+    const numPlayers = 5;
+    const players = [];
+    const playerHands = Array.from({ length: numPlayers }, () => []);
     let dealerHand = [];
+    const deck = [];
+    let currentPlayerIndex = 0;
     let gameOver = false;
+    let balance = 1000;
+    let currentBet = 0;
 
     function createDeck() {
         for (let suit of suits) {
@@ -22,15 +27,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startGame() {
-        deck.length = 0; // Reset the deck
+        deck.length = 0;
         createDeck();
         shuffleDeck();
-        playerHand = [deck.pop(), deck.pop()];
-        dealerHand = [deck.pop(), deck.pop()];
-        gameOver = false;
-        document.getElementById('status').textContent = '';
+        playerHands.forEach(hand => hand.length = 0); // Clear previous hands
+        dealerHand = [];
+        createPlayers();
+
+        for (let i = 0; i < 2; i++) {
+            playerHands.forEach(hand => hand.push(deck.pop()));
+            dealerHand.push(deck.pop());
+        }
+
         renderHands();
-        checkForEndOfGame();
+        renderDeck();
+        document.getElementById('status').textContent = '';
+        gameOver = false;
+    }
+
+    function createPlayers() {
+        players.length = 0;
+        for (let i = 0; i < numPlayers; i++) {
+            players.push({ id: i, name: `Player ${i + 1}` });
+        }
     }
 
     function calculateHandValue(hand) {
@@ -54,23 +73,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderHands() {
-        document.getElementById('player-cards').innerHTML = playerHand.map(card => `${card.value} of ${card.suit}`).join('<br>');
-        document.getElementById('dealer-cards').innerHTML = dealerHand.map(card => `${card.value} of ${card.suit}`).join('<br>');
+        // Render dealer's hand
+        document.getElementById('dealer-cards').innerHTML = dealerHand.map(card => 
+            `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
+        ).join('');
+
+        // Render each player's hand
+        const playersContainer = document.getElementById('players-container');
+        playersContainer.innerHTML = players.map((player, index) => `
+            <div class="player-area" id="player-${index}">
+                <h3>${player.name}</h3>
+                <div class="card-container">
+                    ${playerHands[index].map(card => 
+                        `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
+                    ).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderDeck() {
+        // Render the deck of cards (for demonstration purposes)
+        document.getElementById('deck-container').innerHTML = deck.map(card => 
+            `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
+        ).join('');
     }
 
     function checkForEndOfGame() {
-        const playerValue = calculateHandValue(playerHand);
+        const playerValue = calculateHandValue(playerHands[currentPlayerIndex]);
         const dealerValue = calculateHandValue(dealerHand);
 
-        if (playerValue === 21) {
-            document.getElementById('status').textContent = 'Blackjack! You win!';
+        if (playerValue === 21 && playerHands[currentPlayerIndex].length === 2) {
+            document.getElementById('status').textContent = `${players[currentPlayerIndex].name} has Blackjack!`;
             gameOver = true;
             return;
         }
 
         if (playerValue > 21) {
-            document.getElementById('status').textContent = 'You busted! Dealer wins.';
-            gameOver = true;
+            document.getElementById('status').textContent = `${players[currentPlayerIndex].name} busted!`;
+            moveToNextPlayer();
             return;
         }
 
@@ -80,14 +121,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (gameOver && dealerValue <= 21 && playerValue <= 21) {
-            if (dealerValue > playerValue) {
-                document.getElementById('status').textContent = 'Dealer wins.';
-            } else if (dealerValue < playerValue) {
-                document.getElementById('status').textContent = 'You win!';
-            } else {
+        if (gameOver) {
+            if (dealerValue > 21 || playerValue > dealerValue) {
+                document.getElementById('status').textContent = `${players[currentPlayerIndex].name} wins!`;
+                balance += currentBet * 2; // Win bet
+            } else if (dealerValue === playerValue) {
                 document.getElementById('status').textContent = 'It\'s a tie!';
+                balance += currentBet; // Push bet
+            } else {
+                document.getElementById('status').textContent = 'Dealer wins.';
             }
+            document.getElementById('balance').textContent = `Balance: $${balance}`;
         }
     }
 
@@ -99,244 +143,54 @@ document.addEventListener('DOMContentLoaded', () => {
         checkForEndOfGame();
     }
 
-    document.getElementById('hit-button').addEventListener('click', () => {
+    function handleHit() {
         if (!gameOver) {
-            playerHand.push(deck.pop());
+            const currentPlayer = getCurrentPlayer();
+            currentPlayer.push(deck.pop());
             renderHands();
-            checkForEndOfGame();
+            if (calculateHandValue(currentPlayer) > 21) {
+                document.getElementById('status').textContent = `${players[currentPlayerIndex].name} busted!`;
+                moveToNextPlayer();
+            }
         }
-    });
+    }
 
-    document.getElementById('stand-button').addEventListener('click', () => {
+    function handleStand() {
         if (!gameOver) {
-            gameOver = true;
-            dealerPlays();
-        }
-    });
-
-    document.getElementById('reset-button').addEventListener('click', startGame);
-
-    startGame();
-});
-
-
-
-
-//functionality that places bets and tracks players balances
-let balance = 1000;
-let currentBet = 0;
-
-document.getElementById('place-bet').addEventListener('click', () => {
-    const betAmount = parseInt(document.getElementById('bet-amount').value);
-    if (isNaN(betAmount) || betAmount <= 0 || betAmount > balance) {
-        alert('Invalid bet amount');
-        return;
-    }
-    currentBet = betAmount;
-    balance -= currentBet;
-    document.getElementById('balance').textContent = `Balance: $${balance}`;
-    startGame();
-});
-//   img function
-function renderHands() {
-    document.getElementById('player-cards').innerHTML = playerHand.map(card => 
-        `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
-    ).join('');
-    document.getElementById('dealer-cards').innerHTML = dealerHand.map(card => 
-        `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
-    ).join('');
-}
-//  improved msgs 
-function checkForEndOfGame() {
-    const playerValue = calculateHandValue(playerHand);
-    const dealerValue = calculateHandValue(dealerHand);
-
-    if (playerValue === 21 && playerHand.length === 2) {
-        document.getElementById('status').textContent = 'Blackjack! You win!';
-        gameOver = true;
-        return;
-    }
-
-    if (playerValue > 21) {
-        document.getElementById('status').textContent = 'You busted! Dealer wins.';
-        gameOver = true;
-        return;
-    }
-
-    if (dealerValue > 21) {
-        document.getElementById('status').textContent = 'Dealer busted! You win!';
-        gameOver = true;
-        return;
-    }
-
-    if (gameOver) {
-        if (dealerValue > 21 || playerValue > dealerValue) {
-            document.getElementById('status').textContent = 'You win!';
-        } else if (dealerValue === playerValue) {
-            document.getElementById('status').textContent = 'It\'s a tie!';
-        } else {
-            document.getElementById('status').textContent = 'Dealer wins.';
-        }
-    }
-}
-
-// Audio effeccts 
-const hitSound = new Audio('sounds/hit.mp3');
-const winSound = new Audio('sounds/win.mp3');
-const loseSound = new Audio('sounds/lose.mp3');
-
-document.getElementById('hit-button').addEventListener('click', () => {
-    if (!gameOver) {
-        playerHand.push(deck.pop());
-        renderHands();
-        hitSound.play();
-        checkForEndOfGame();
-    }
-});
-
-function checkForEndOfGame() {
-    const playerValue = calculateHandValue(playerHand);
-    const dealerValue = calculateHandValue(dealerHand);
-
-    if (playerValue === 21 && playerHand.length === 2) {
-        document.getElementById('status').textContent = 'Blackjack! You win!';
-        winSound.play();
-        gameOver = true;
-        return;
-    }
-
-    if (playerValue > 21) {
-        document.getElementById('status').textContent = 'You busted! Dealer wins.';
-        loseSound.play();
-        gameOver = true;
-        return;
-    }
-
-    if (dealerValue > 21) {
-        document.getElementById('status').textContent = 'Dealer busted! You win!';
-        winSound.play();
-        gameOver = true;
-        return;
-    }
-
-    if (gameOver) {
-        if (dealerValue > 21 || playerValue > dealerValue) {
-            document.getElementById('status').textContent = 'You win!';
-            winSound.play();
-        } else if (dealerValue === playerValue) {
-            document.getElementById('status').textContent = 'It\'s a tie!';
-        } else {
-            document.getElementById('status').textContent = 'Dealer wins.';
-            loseSound.play();
-        }
-    }
-}
- 
-// handling mutliple players 
-
-const numPlayers = 5;
-const players = [];
-const playerHands = Array.from({ length: numPlayers }, () => []);
-let dealerHand = [];
-
-function createPlayers() {
-    for (let i = 0; i < numPlayers; i++) {
-        players.push({ id: i, name: `Player ${i + 1}` });
-    }
-}
-
-
-// start game function 
-
-function startGame() {
-    deck.length = 0;
-    createDeck();
-    shuffleDeck();
-    playerHands.forEach(hand => hand.length = 0); // Clear previous hands
-    dealerHand = [];
-    createPlayers();
-    
-    for (let i = 0; i < 2; i++) {
-        playerHands.forEach(hand => hand.push(deck.pop()));
-        dealerHand.push(deck.pop());
-    }
-
-    renderHands();
-    document.getElementById('status').textContent = '';
-    gameOver = false;
-}
-
-
-// render hand to multiple players 
-function renderHands() {
-    // Render dealer's hand
-    document.getElementById('dealer-cards').innerHTML = dealerHand.map(card => 
-        `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
-    ).join('');
-
-    // Render each player's hand
-    const playersContainer = document.getElementById('players-container');
-    playersContainer.innerHTML = players.map((player, index) => `
-        <div class="player-area" id="player-${index}">
-            <h3>${player.name}</h3>
-            <div class="card-container">
-                ${playerHands[index].map(card => 
-                    `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
-                ).join('')}
-            </div>
-        </div>
-    `).join('');
-}
-
-
-// handle player actions 
-
-let currentPlayerIndex = 0;
-
-function getCurrentPlayer() {
-    return playerHands[currentPlayerIndex];
-}
-
-function handleHit() {
-    if (!gameOver) {
-        const currentPlayer = getCurrentPlayer();
-        currentPlayer.push(deck.pop());
-        renderHands();
-        if (calculateHandValue(currentPlayer) > 21) {
-            document.getElementById('status').textContent = `${players[currentPlayerIndex].name} busted!`;
             moveToNextPlayer();
         }
     }
-}
 
-function handleStand() {
-    if (!gameOver) {
-        moveToNextPlayer();
+    function moveToNextPlayer() {
+        if (currentPlayerIndex < numPlayers - 1) {
+            currentPlayerIndex++;
+            document.getElementById('status').textContent = `${players[currentPlayerIndex].name}'s turn.`;
+        } else {
+            gameOver = true;
+            dealerPlays();
+        }
+        renderHands();
     }
-}
 
-function moveToNextPlayer() {
-    if (currentPlayerIndex < numPlayers - 1) {
-        currentPlayerIndex++;
-        document.getElementById('status').textContent = `${players[currentPlayerIndex].name}'s turn.`;
-    } else {
-        gameOver = true;
-        dealerPlays();
+    function getCurrentPlayer() {
+        return playerHands[currentPlayerIndex];
     }
-    renderHands();
-}
 
-function dealerPlays() {
-    while (calculateHandValue(dealerHand) < 17) {
-        dealerHand.push(deck.pop());
-    }
-    renderHands();
-    checkForEndOfGame();
-}
+    document.getElementById('hit-button').addEventListener('click', handleHit);
+    document.getElementById('stand-button').addEventListener('click', handleStand);
+    document.getElementById('reset-button').addEventListener('click', startGame);
 
+    document.getElementById('place-bet').addEventListener('click', () => {
+        const betAmount = parseInt(document.getElementById('bet-amount').value);
+        if (isNaN(betAmount) || betAmount <= 0 || betAmount > balance) {
+            alert('Invalid bet amount');
+            return;
+        }
+        currentBet = betAmount;
+        balance -= currentBet;
+        document.getElementById('balance').textContent = `Balance: $${balance}`;
+        startGame();
+    });
 
-// event listeners for modified actions 
-
-document.getElementById('hit-button').addEventListener('click', handleHit);
-document.getElementById('stand-button').addEventListener('click', handleStand);
-document.getElementById('reset-button').addEventListener('click', startGame);
+    startGame(); // Initialize the game when the page loads
+});
