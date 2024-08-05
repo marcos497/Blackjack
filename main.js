@@ -11,7 +11,7 @@ const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'
 
 document.getElementById('start-game').addEventListener('click', startGame);
 document.getElementById('submit-names').addEventListener('click', submitNames);
-document.getElementById('place-bet').addEventListener('click', handleDeal);
+document.getElementById('place-bet').addEventListener('click', placeBet);
 document.getElementById('hit-button').addEventListener('click', handleHit);
 document.getElementById('stand-button').addEventListener('click', handleStand);
 document.getElementById('reset-button').addEventListener('click', init);
@@ -133,7 +133,19 @@ function submitNames() {
     render();
 }
 
-function handleDeal() {
+function placeBet() {
+    const betAmount = parseInt(document.getElementById('bet-amount').value);
+    if (betAmount <= 0 || betAmount > bankroll) {
+        alert('Invalid bet amount');
+        return;
+    }
+    bet = betAmount;
+    bankroll -= bet;
+    dealInitialCards();
+    render();
+}
+
+function dealInitialCards() {
     outcome = null;
     deck = getNewShuffledDeck();
     dealer.hand = [deck.pop(), deck.pop()];
@@ -151,8 +163,6 @@ function handleDeal() {
         settleBet();
     }
 
-    document.getElementById('betting-controls').style.display = 'none';
-    document.getElementById('player-controls').style.display = 'block';
     render();
 }
 
@@ -177,3 +187,28 @@ function handleStand() {
     if (currentPlayer >= players.length) {
         while (dealer.total < 17) {
             dealer.hand.push(deck.pop());
+            dealer.total = getHandTotal(dealer.hand);
+        }
+        determineOutcome();
+    }
+    render();
+}
+
+function determineOutcome() {
+    if (dealer.total > 21) {
+        outcome = 'Dealer busts!';
+    } else {
+        outcome = players.map(player => {
+            if (player.total > 21) return `${player.name} busts!`;
+            if (player.total > dealer.total) return `${player.name} wins!`;
+            if (player.total < dealer.total) return `${player.name} loses!`;
+            return `${player.name} ties!`;
+        }).join(' ');
+    }
+    settleBet();
+    render();
+}
+
+function settleBet() {
+    // Implement bet settlement logic here
+}
