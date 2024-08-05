@@ -118,3 +118,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startGame();
 });
+
+
+
+
+//functionality that places bets and tracks players balances
+let balance = 1000;
+let currentBet = 0;
+
+document.getElementById('place-bet').addEventListener('click', () => {
+    const betAmount = parseInt(document.getElementById('bet-amount').value);
+    if (isNaN(betAmount) || betAmount <= 0 || betAmount > balance) {
+        alert('Invalid bet amount');
+        return;
+    }
+    currentBet = betAmount;
+    balance -= currentBet;
+    document.getElementById('balance').textContent = `Balance: $${balance}`;
+    startGame();
+});
