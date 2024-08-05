@@ -137,3 +137,98 @@ document.getElementById('place-bet').addEventListener('click', () => {
     document.getElementById('balance').textContent = `Balance: $${balance}`;
     startGame();
 });
+//   img function
+function renderHands() {
+    document.getElementById('player-cards').innerHTML = playerHand.map(card => 
+        `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
+    ).join('');
+    document.getElementById('dealer-cards').innerHTML = dealerHand.map(card => 
+        `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
+    ).join('');
+}
+//  improved msgs 
+function checkForEndOfGame() {
+    const playerValue = calculateHandValue(playerHand);
+    const dealerValue = calculateHandValue(dealerHand);
+
+    if (playerValue === 21 && playerHand.length === 2) {
+        document.getElementById('status').textContent = 'Blackjack! You win!';
+        gameOver = true;
+        return;
+    }
+
+    if (playerValue > 21) {
+        document.getElementById('status').textContent = 'You busted! Dealer wins.';
+        gameOver = true;
+        return;
+    }
+
+    if (dealerValue > 21) {
+        document.getElementById('status').textContent = 'Dealer busted! You win!';
+        gameOver = true;
+        return;
+    }
+
+    if (gameOver) {
+        if (dealerValue > 21 || playerValue > dealerValue) {
+            document.getElementById('status').textContent = 'You win!';
+        } else if (dealerValue === playerValue) {
+            document.getElementById('status').textContent = 'It\'s a tie!';
+        } else {
+            document.getElementById('status').textContent = 'Dealer wins.';
+        }
+    }
+}
+
+// Audio effeccts 
+
+const hitSound = new Audio('sounds/hit.mp3');
+const winSound = new Audio('sounds/win.mp3');
+const loseSound = new Audio('sounds/lose.mp3');
+
+document.getElementById('hit-button').addEventListener('click', () => {
+    if (!gameOver) {
+        playerHand.push(deck.pop());
+        renderHands();
+        hitSound.play();
+        checkForEndOfGame();
+    }
+});
+
+function checkForEndOfGame() {
+    const playerValue = calculateHandValue(playerHand);
+    const dealerValue = calculateHandValue(dealerHand);
+
+    if (playerValue === 21 && playerHand.length === 2) {
+        document.getElementById('status').textContent = 'Blackjack! You win!';
+        winSound.play();
+        gameOver = true;
+        return;
+    }
+
+    if (playerValue > 21) {
+        document.getElementById('status').textContent = 'You busted! Dealer wins.';
+        loseSound.play();
+        gameOver = true;
+        return;
+    }
+
+    if (dealerValue > 21) {
+        document.getElementById('status').textContent = 'Dealer busted! You win!';
+        winSound.play();
+        gameOver = true;
+        return;
+    }
+
+    if (gameOver) {
+        if (dealerValue > 21 || playerValue > dealerValue) {
+            document.getElementById('status').textContent = 'You win!';
+            winSound.play();
+        } else if (dealerValue === playerValue) {
+            document.getElementById('status').textContent = 'It\'s a tie!';
+        } else {
+            document.getElementById('status').textContent = 'Dealer wins.';
+            loseSound.play();
+        }
+    }
+}

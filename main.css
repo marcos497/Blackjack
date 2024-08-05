@@ -29,3 +29,30 @@ button {
     padding: 10px 20px;
     font-size: 16px;
 }
+
+
+
+
+/* adding style to imgs */
+.card-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.card-container img {
+    width: 100px;
+    height: 140px;
+}
+
+
+/* animated card dealing */
+
+@keyframes dealCard {
+    from { opacity: 0; transform: scale(0); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.card-container img {
+    animation: dealCard 0.5s ease;
+}
