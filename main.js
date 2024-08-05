@@ -9,6 +9,13 @@ let bet = 0;
 const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
 const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
+document.getElementById('start-game').addEventListener('click', startGame);
+document.getElementById('submit-names').addEventListener('click', submitNames);
+document.getElementById('place-bet').addEventListener('click', handleDeal);
+document.getElementById('hit-button').addEventListener('click', handleHit);
+document.getElementById('stand-button').addEventListener('click', handleStand);
+document.getElementById('reset-button').addEventListener('click', init);
+
 function getNewShuffledDeck() {
     let newDeck = [];
     for (let suit of suits) {
@@ -70,7 +77,7 @@ function render() {
     players.forEach((player, index) => {
         const playerArea = document.createElement('div');
         playerArea.classList.add('player-area');
-        playerArea.innerHTML = `<h3>Player ${index + 1}</h3>`;
+        playerArea.innerHTML = `<h3>${player.name}</h3>`;
         const playerCards = document.createElement('div');
         playerCards.classList.add('card-container');
         for (let card of player.hand) {
@@ -90,6 +97,7 @@ function render() {
 function init() {
     document.getElementById('betting-controls').style.display = 'none';
     document.getElementById('player-controls').style.display = 'none';
+    document.getElementById('player-names').style.display = 'none';
     document.getElementById('controls').style.display = 'block';
     outcome = null;
     dealer = { hand: [], total: 0 };
@@ -102,8 +110,25 @@ function init() {
 
 function startGame() {
     const numPlayers = parseInt(document.getElementById('num-players').value);
-    players = Array(numPlayers).fill().map(() => ({ hand: [], total: 0 }));
+    players = Array(numPlayers).fill().map(() => ({ name: '', hand: [], total: 0 }));
     document.getElementById('controls').style.display = 'none';
+    const playerNamesDiv = document.getElementById('player-name-inputs');
+    playerNamesDiv.innerHTML = '';
+    players.forEach((player, index) => {
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.placeholder = `Player ${index + 1} Name`;
+        nameInput.id = `player-name-${index}`;
+        playerNamesDiv.appendChild(nameInput);
+    });
+    document.getElementById('player-names').style.display = 'block';
+}
+
+function submitNames() {
+    players.forEach((player, index) => {
+        player.name = document.getElementById(`player-name-${index}`).value || `Player ${index + 1}`;
+    });
+    document.getElementById('player-names').style.display = 'none';
     document.getElementById('betting-controls').style.display = 'block';
     render();
 }
@@ -140,7 +165,7 @@ function handleHit() {
     player.total = getHandTotal(player.hand);
 
     if (player.total > 21) {
-        outcome = `Player ${currentPlayer + 1} is bust!`;
+        outcome = `${player.name} is bust!`;
         currentPlayer++;
     }
 
@@ -152,40 +177,3 @@ function handleStand() {
     if (currentPlayer >= players.length) {
         while (dealer.total < 17) {
             dealer.hand.push(deck.pop());
-            dealer.total = getHandTotal(dealer.hand);
-        }
-
-        if (dealer.total > 21) {
-            outcome = 'Dealer is bust! Players win!';
-        } else {
-            outcome = 'Dealer stands. Determining winners...';
-        }
-    }
-
-    render();
-}
-
-function settleBet() {
-    if (outcome === 'Dealer has Blackjack!' || dealer.total === 21) {
-        bankroll -= bet;
-    } else if (players.some(player => player.total === 21) || outcome === 'Player has Blackjack!') {
-        bankroll += bet * 1.5;
-    } else if (dealer.total > 21 || players.some(player => player.total > dealer.total)) {
-        bankroll += bet;
-    } else if (players.every(player => player.total < dealer.total)) {
-        bankroll -= bet;
-    }
-    bet = 0;
-    render();
-}
-
-document.getElementById('start-game').addEventListener('click', startGame);
-document.getElementById('place-bet').addEventListener('click', () => {
-    bet = parseInt(document.getElementById('bet-amount').value);
-    handleDeal();
-});
-document.getElementById('hit-button').addEventListener('click', handleHit);
-document.getElementById('stand-button').addEventListener('click', handleStand);
-document.getElementById('reset-button').addEventListener('click', init);
-
-init();
