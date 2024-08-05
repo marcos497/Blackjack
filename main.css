@@ -23,9 +23,19 @@ body {
     flex-wrap: wrap;
 }
 
-.card-container img {
+.card {
     width: 100px;
     height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #000;
+    border-radius: 5px;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
 }
 
 #players-container {
