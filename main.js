@@ -31,3 +31,44 @@ const hand = [
 ];
 
 console.log(getHandTotal(hand)); // Output should be 16
+
+
+
+
+// jims code piece 
+
+function init() {
+    // Several of these state variables need to be
+    // re-initialized in the handleDeal function
+    // but also need initialization here so that the
+    // first call to render() won't cause an error
+    outcome = null;
+    dHand = [];
+    pHand = [];
+    pTotal = dTotal = 0;  // Yes you can - assignment happens right to left
+    bankroll = 500;
+    bet = 0;
+    render();
+  }
+
+  function handleDeal() {
+    outcome = null;
+    deck = getNewShuffledDeck();
+    dHand = [deck.pop(), deck.pop()];
+    pHand = [deck.pop(), deck.pop()];
+    // Check for blackjack
+    dTotal = getHandTotal(dHand);
+    pTotal = getHandTotal(pHand);
+    if (dTotal === 21 && pTotal === 21) {
+      outcome = 'T'; // Hand is a push/tie
+    } else if (dTotal === 21) {
+      outcome = 'DBJ'; // Dealer wins with BJ
+    } else if (pTotal === 21) {
+      outcome = 'PBJ'; // Player wins with BJ
+    }
+    if (outcome) settleBet();
+    render();
+  }
+
+
+  
