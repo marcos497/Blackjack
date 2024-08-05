@@ -33,7 +33,7 @@ button {
 
 
 
-/* adding style to imgs */
+/* adding style to imgs tp cards */
 .card-container {
     display: flex;
     justify-content: center;
@@ -55,4 +55,28 @@ button {
 
 .card-container img {
     animation: dealCard 0.5s ease;
+}
+
+/* supporting multiple players */
+
+#players-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.player-area {
+    border: 1px solid #fff;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.card-container {
+    display: flex;
+    gap: 10px;
+}
+
+.card-container img {
+    width: 100px;
+    height: 140px;
 }

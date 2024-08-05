@@ -181,7 +181,6 @@ function checkForEndOfGame() {
 }
 
 // Audio effeccts 
-
 const hitSound = new Audio('sounds/hit.mp3');
 const winSound = new Audio('sounds/win.mp3');
 const loseSound = new Audio('sounds/lose.mp3');
@@ -231,4 +230,106 @@ function checkForEndOfGame() {
             loseSound.play();
         }
     }
+}
+ 
+// handling mutliple players 
+
+const numPlayers = 5;
+const players = [];
+const playerHands = Array.from({ length: numPlayers }, () => []);
+let dealerHand = [];
+
+function createPlayers() {
+    for (let i = 0; i < numPlayers; i++) {
+        players.push({ id: i, name: `Player ${i + 1}` });
+    }
+}
+
+
+// start game function 
+
+function startGame() {
+    deck.length = 0;
+    createDeck();
+    shuffleDeck();
+    playerHands.forEach(hand => hand.length = 0); // Clear previous hands
+    dealerHand = [];
+    createPlayers();
+    
+    for (let i = 0; i < 2; i++) {
+        playerHands.forEach(hand => hand.push(deck.pop()));
+        dealerHand.push(deck.pop());
+    }
+
+    renderHands();
+    document.getElementById('status').textContent = '';
+    gameOver = false;
+}
+
+
+// render hand to multiple players 
+function renderHands() {
+    // Render dealer's hand
+    document.getElementById('dealer-cards').innerHTML = dealerHand.map(card => 
+        `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
+    ).join('');
+
+    // Render each player's hand
+    const playersContainer = document.getElementById('players-container');
+    playersContainer.innerHTML = players.map((player, index) => `
+        <div class="player-area" id="player-${index}">
+            <h3>${player.name}</h3>
+            <div class="card-container">
+                ${playerHands[index].map(card => 
+                    `<img src="images/cards/${card.value}_of_${card.suit}.png" alt="${card.value} of ${card.suit}">`
+                ).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+
+// handle player actions 
+
+let currentPlayerIndex = 0;
+
+function getCurrentPlayer() {
+    return playerHands[currentPlayerIndex];
+}
+
+function handleHit() {
+    if (!gameOver) {
+        const currentPlayer = getCurrentPlayer();
+        currentPlayer.push(deck.pop());
+        renderHands();
+        if (calculateHandValue(currentPlayer) > 21) {
+            document.getElementById('status').textContent = `${players[currentPlayerIndex].name} busted!`;
+            moveToNextPlayer();
+        }
+    }
+}
+
+function handleStand() {
+    if (!gameOver) {
+        moveToNextPlayer();
+    }
+}
+
+function moveToNextPlayer() {
+    if (currentPlayerIndex < numPlayers - 1) {
+        currentPlayerIndex++;
+        document.getElementById('status').textContent = `${players[currentPlayerIndex].name}'s turn.`;
+    } else {
+        gameOver = true;
+        dealerPlays();
+    }
+    renderHands();
+}
+
+function dealerPlays() {
+    while (calculateHandValue(dealerHand) < 17) {
+        dealerHand.push(deck.pop());
+    }
+    renderHands();
+    checkForEndOfGame();
 }
