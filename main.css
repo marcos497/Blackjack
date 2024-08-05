@@ -12,15 +12,14 @@ body {
     margin-top: 20px;
 }
 
-#deck-area, #dealer-area, #players-area {
+#controls {
     margin-bottom: 20px;
 }
 
-.card-container {
+#deck-container {
     display: flex;
-    gap: 10px;
-    justify-content: center;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .card {
@@ -36,6 +35,18 @@ body {
     font-size: 20px;
     font-weight: bold;
     text-align: center;
+    margin: 5px;
+}
+
+#dealer-cards, #players-container {
+    margin: 20px auto;
+}
+
+.card-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 #players-container {
@@ -52,61 +63,12 @@ body {
     border-radius: 8px;
 }
 
-#controls {
-    margin-top: 20px;
-}
-
-button {
-    margin: 5px;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #fff;
-    color: #2e7d32;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #e0e0e0;
-}
-
 #status {
     margin-top: 20px;
     font-size: 18px;
-    font-weight: bold;
-}
-
-#betting {
-    margin-top: 20px;
-    background-color: #388e3c;
-    padding: 10px;
-    border-radius: 8px;
-}
-
-#betting input {
-    padding: 5px;
-    font-size: 16px;
-    border: none;
-    border-radius: 4px;
-    margin-right: 10px;
-}
-
-#betting button {
-    padding: 5px 10px;
-    font-size: 16px;
-    background-color: #fff;
-    color: #2e7d32;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-#betting button:hover {
-    background-color: #e0e0e0;
 }
 
 #balance {
-    font-size: 18px;
     margin-top: 10px;
+    font-size: 20px;
 }
