@@ -5,55 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blackjack 21</title>
     <link rel="stylesheet" href="main.css">
+    <script defer src="main.js"></script>
 </head>
 <body>
     <!-- Landing Page -->
-    <div id="landing-page">
+    <div id="landingPage">
         <h1>Welcome to Blackjack 21</h1>
-        <button id="start-button">Start Game</button>
+        <button id="startButton">Start Game</button>
     </div>
 
-    <!-- Player Setup Page -->
-    <div id="setup-page" style="display: none;">
-        <h1>Player Setup</h1>
-        <label for="num-players">Number of Players:</label>
-        <input type="number" id="num-players" min="1" max="8">
-        <button id="next-button">Next</button>
-        <div id="player-names" style="display: none;">
-            <h2>Enter Player Names</h2>
-            <div id="player-names-inputs"></div>
-            <button id="start-game-button">Start Game</button>
+    <!-- Intro Page -->
+    <div id="introPage" style="display: none;">
+        <h2>Enter Player Details</h2>
+        <div id="playerInputs">
+            <div class="player-input">
+                <label>Name: <input type="text" class="player-name"></label>
+                <label>Balance: <input type="number" class="player-balance" value="1000"></label>
+            </div>
         </div>
+        <button id="addPlayerButton">Add Another Player</button>
+        <button id="initiateGameButton">Initiate Game</button>
     </div>
 
-    <!-- Game Area -->
-    <div id="game-area" style="display: none;">
-        <h1>Blackjack Game</h1>
-        <div id="controls">
-            <div id="betting-controls">
-                <input type="number" id="bet-amount" placeholder="Enter bet amount" min="1" max="20000">
-                <button id="place-bet">Place Bet</button>
-            </div>
-            <div id="player-controls" style="display: none;">
-                <button id="hit-button">Hit</button>
-                <button id="stand-button">Stand</button>
-                <button id="reset-button">Reset Game</button>
-            </div>
-        </div>
-        <div id="deck-area">
-            <h2>Deck</h2>
-            <div id="deck"></div>
-        </div>
-        <div id="table-area">
-            <h2>Table</h2>
-            <div id="dealer-area">
-                <h3>Dealer</h3>
-                <div id="dealer-cards"></div>
-            </div>
-            <div id="players-area"></div>
-        </div>
+    <!-- Game Page -->
+    <div id="gamePage" style="display: none;">
+        <h2>Blackjack 21</h2>
+        <div id="dealer"></div>
+        <div id="players"></div>
+        <div id="actions"></div>
     </div>
-
-    <script src="main.js"></script>
 </body>
 </html>
