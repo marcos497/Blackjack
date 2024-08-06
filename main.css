@@ -1,53 +1,69 @@
+/* main.css */
+
+/* Basic reset and body styling */
 body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #2e8b57;
-    color: white;
     margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: rgb(31, 141, 31); /* Set the background color to green */
+    color: white; /* Set the text color to white for better contrast */
 }
 
-h1, h2 {
-    text-align: center;
-}
-
+/* Ensure proper visibility for pages and elements */
 #landing-page, #intro-page, #betting-page, #game-page {
-    text-align: center;
+    background-color: inherit; /* Ensure these pages inherit the green background color from body */
+    padding: 20px;
+    border-radius: 8px;
 }
 
-input[type="number"], input[type="text"] {
-    margin: 10px;
-    padding: 5px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+/* General layout styles */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
+/* Styling for buttons */
 button {
-    padding: 10px 20px;
+    background-color: #fff;
+    color: green;
     border: none;
+    padding: 10px 20px;
     border-radius: 5px;
-    background-color: #4CAF50;
-    color: white;
-    font-size: 16px;
     cursor: pointer;
-    margin: 10px;
+    font-size: 16px;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #f0f0f0;
 }
 
-#player-info-display, #game-controls, #betting-table, #game-table {
-    margin: 20px;
+/* Styling for game elements */
+.player-info, .player-bet {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
 }
 
+.player-info {
+    background-color: #393232;
+    color: rgb(203, 210, 203);
+}
+
+.player-bet {
+    background-color: #403737;
+}
+
+#game-controls {
+    margin-top: 20px;
+}
+
+/* Styling for game log */
 #game-log {
-    margin: 20px;
-    font-size: 18px;
-}
-
-.player-bet, .player-info {
-    margin: 10px 0;
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #5a5252;
+    color: green;
 }
