@@ -118,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p>Balance: $${player.balance}</p>
                 <p>Bet: $${player.bet}</p>
                 <p>Cards: <span id="player-cards-${index}"></span></p>
+                <p>Status: <span id="player-status-${index}"></span></p>
             `;
             gameTableDiv.appendChild(playerDiv);
         });
@@ -147,8 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function shuffleAndDeal() {
-        // Implement shuffling and dealing logic here
-        // For now, we will just simulate with a placeholder
         gameLogDiv.textContent += 'Dealer shuffles the deck.\n';
         gameLogDiv.textContent += 'Dealer deals cards to each player.\n';
         players.forEach((player, index) => {
@@ -156,6 +155,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const card2 = drawCard();
             player.cards.push(card1, card2);
             document.getElementById(`player-cards-${index}`).textContent = `${card1}, ${card2}`;
+            const totalValue = calculateCardValue(card1) + calculateCardValue(card2);
+            if (totalValue === 21) {
+                player.balance += player.bet * 1.5;
+                player.status = 'Winner!';
+                document.getElementById(`player-status-${index}`).textContent = 'Winner!';
+                document.getElementById(`player-info-${index}`).style.backgroundColor = '#d4edda';
+            } else if (totalValue > 21) {
+                player.status = 'Busted!';
+                document.getElementById(`player-status-${index}`).textContent = 'Busted!';
+                document.getElementById(`player-info-${index}`).style.backgroundColor = '#f8d7da';
+            }
         });
         const dealerCard1 = drawCard();
         dealer.cards.push(dealerCard1);
@@ -163,12 +173,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawCard() {
-        // Implement card drawing logic here
-        // For now, we will just return a placeholder
         const suits = ['♣', '♦', '♥', '♠'];
         const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
         const suit = suits[Math.floor(Math.random() * suits.length)];
         const value = values[Math.floor(Math.random() * values.length)];
         return `${value}${suit}`;
+    }
+
+    function calculateCardValue(card) {
+        const value = card.slice(0, -1);
+        if (['J', 'Q', 'K'].includes(value)) {
+            return 10;
+        } else if (value === 'A') {
+            return 11; // Initially consider Ace as 11
+        } else {
+            return parseInt(value);
+        }
     }
 });
