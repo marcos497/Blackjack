@@ -1,74 +1,79 @@
 body {
     font-family: Arial, sans-serif;
+    background-color: #2E7D32;
+    color: white;
     text-align: center;
-    background-color: #2e7d32;
-    color: #fff;
     margin: 0;
     padding: 0;
 }
 
-#game-area {
-    display: inline-block;
+h1 {
+    margin: 20px 0;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#landing-page, #setup-page, #game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+#setup-page, #game-area {
+    display: none;
+}
+
+#player-names {
     margin-top: 20px;
 }
 
-#controls, #betting-controls, #player-controls, #player-names {
-    margin-bottom: 20px;
+#player-names-inputs input {
+    display: block;
+    margin: 5px 0;
 }
 
-#deck-container, #dealer-cards, #players-container {
+#controls {
+    margin: 20px 0;
+}
+
+#table-area {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+}
+
+#dealer-area, #players-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px;
+}
+
+#dealer-cards, .player-cards {
+    display: flex;
     justify-content: center;
 }
 
 .card {
-    width: 100px;
-    height: 140px;
+    width: 50px;
+    height: 70px;
+    margin: 5px;
+    border: 1px solid white;
+    background-color: white;
+    color: black;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #fff;
-    color: #000;
-    border: 1px solid #000;
-    border-radius: 5px;
-    font-size: 20px;
-    font-weight: bold;
-    text-align: center;
-    margin: 5px;
 }
 
-.card-container {
-    display: flex;
-    gap: 10px;
-}
-
-#players-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.player-area {
-    border: 1px solid #fff;
-    padding: 10px;
-    margin-bottom: 10px;
-    background-color: #388e3c;
-    border-radius: 8px;
-}
-
-#status {
-    margin-top: 20px;
-    font-size: 18px;
-}
-
-#balance {
-    margin-top: 10px;
-    font-size: 20px;
-}
-
-input, button {
-    padding: 10px;
-    margin: 5px;
-    font-size: 16px;
+.hidden {
+    background-color: black;
 }
