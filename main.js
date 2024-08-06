@@ -1,39 +1,28 @@
+// Initialize variables
 let deck = [];
 let players = [];
-let dealer = {};
-let currentPlayer = 0;
-let outcome = null;
-let bankroll = 20000;
-let bet = 0;
+let dealer = { hand: [], total: 0 };
+let numPlayers = 1;
+let currentPlayerIndex = 0;
+let balance = 20000;
 
-const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-
-document.getElementById('start-game').addEventListener('click', startGame);
-document.getElementById('submit-names').addEventListener('click', submitNames);
-document.getElementById('place-bet').addEventListener('click', placeBet);
-document.getElementById('hit-button').addEventListener('click', handleHit);
-document.getElementById('stand-button').addEventListener('click', handleStand);
-document.getElementById('reset-button').addEventListener('click', init);
-
+// Initialize deck
 function getNewShuffledDeck() {
-    let newDeck = [];
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    let deck = [];
     for (let suit of suits) {
         for (let value of values) {
-            newDeck.push({ value, suit });
+            deck.push({ suit, value });
         }
     }
-    for (let i = newDeck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
-    }
-    return newDeck;
+    return deck.sort(() => Math.random() - 0.5);
 }
 
+// Get the hand total
 function getHandTotal(hand) {
     let total = 0;
     let aces = 0;
-
     for (let card of hand) {
         if (card.value === 'J' || card.value === 'Q' || card.value === 'K') {
             total += 10;
@@ -44,171 +33,212 @@ function getHandTotal(hand) {
             total += parseInt(card.value);
         }
     }
-
     while (total > 21 && aces > 0) {
         total -= 10;
         aces -= 1;
     }
-
     return total;
 }
 
-function render() {
-    const deckContainer = document.getElementById('deck-container');
-    deckContainer.innerHTML = '';
-    for (let card of deck) {
-        const cardDiv = document.createElement('div');
-        cardDiv.classList.add('card');
-        cardDiv.textContent = `${card.value} of ${card.suit}`;
-        deckContainer.appendChild(cardDiv);
-    }
-
-    const dealerCards = document.getElementById('dealer-cards');
-    dealerCards.innerHTML = '';
-    for (let card of dealer.hand) {
-        const cardDiv = document.createElement('div');
-        cardDiv.classList.add('card');
-        cardDiv.textContent = `${card.value} of ${card.suit}`;
-        dealerCards.appendChild(cardDiv);
-    }
-
-    const playersContainer = document.getElementById('players-container');
-    playersContainer.innerHTML = '';
-    players.forEach((player, index) => {
-        const playerArea = document.createElement('div');
-        playerArea.classList.add('player-area');
-        playerArea.innerHTML = `<h3>${player.name}</h3>`;
-        const playerCards = document.createElement('div');
-        playerCards.classList.add('card-container');
-        for (let card of player.hand) {
-            const cardDiv = document.createElement('div');
-            cardDiv.classList.add('card');
-            cardDiv.textContent = `${card.value} of ${card.suit}`;
-            playerCards.appendChild(cardDiv);
-        }
-        playerArea.appendChild(playerCards);
-        playersContainer.appendChild(playerArea);
-    });
-
-    document.getElementById('status').textContent = outcome || '';
-    document.getElementById('balance').textContent = `Balance: $${bankroll}`;
-}
-
-function init() {
+// Initialize the game
+function initGame() {
+    balance = 20000;
+    document.getElementById('balance').innerText = `Balance: $${balance}`;
+    document.getElementById('player-names').style.display = 'none';
     document.getElementById('betting-controls').style.display = 'none';
     document.getElementById('player-controls').style.display = 'none';
-    document.getElementById('player-names').style.display = 'none';
-    document.getElementById('controls').style.display = 'block';
-    outcome = null;
-    dealer = { hand: [], total: 0 };
-    players = [];
-    currentPlayer = 0;
-    bankroll = 20000;
-    bet = 0;
-    render();
+    document.getElementById('deck-container').innerHTML = '';
+    document.getElementById('dealer-cards').innerHTML = '';
+    document.getElementById('players-container').innerHTML = '';
+    document.getElementById('status').innerText = '';
 }
 
+// Start the game by setting up players
 function startGame() {
-    const numPlayers = parseInt(document.getElementById('num-players').value);
-    players = Array(numPlayers).fill().map(() => ({ name: '', hand: [], total: 0 }));
-    document.getElementById('controls').style.display = 'none';
-    const playerNamesDiv = document.getElementById('player-name-inputs');
-    playerNamesDiv.innerHTML = '';
-    players.forEach((player, index) => {
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.placeholder = `Player ${index + 1} Name`;
-        nameInput.id = `player-name-${index}`;
-        playerNamesDiv.appendChild(nameInput);
-    });
+    numPlayers = parseInt(document.getElementById('num-players').value);
+    players = [];
+    for (let i = 0; i < numPlayers; i++) {
+        players.push({ name: '', hand: [], total: 0, bet: 0 });
+    }
+    renderPlayerNameInputs();
+}
+
+// Render player name inputs
+function renderPlayerNameInputs() {
+    let playerNameInputs = document.getElementById('player-name-inputs');
+    playerNameInputs.innerHTML = '';
+    for (let i = 0; i < numPlayers; i++) {
+        let input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Player ${i + 1} Name`;
+        input.id = `player-name-${i}`;
+        playerNameInputs.appendChild(input);
+    }
     document.getElementById('player-names').style.display = 'block';
 }
 
+// Submit player names
 function submitNames() {
-    players.forEach((player, index) => {
-        player.name = document.getElementById(`player-name-${index}`).value || `Player ${index + 1}`;
-    });
+    for (let i = 0; i < numPlayers; i++) {
+        players[i].name = document.getElementById(`player-name-${i}`).value || `Player ${i + 1}`;
+    }
     document.getElementById('player-names').style.display = 'none';
     document.getElementById('betting-controls').style.display = 'block';
-    render();
 }
 
+// Place bet for current player
 function placeBet() {
-    const betAmount = parseInt(document.getElementById('bet-amount').value);
-    if (betAmount <= 0 || betAmount > bankroll) {
-        alert('Invalid bet amount');
+    let betAmount = parseInt(document.getElementById('bet-amount').value);
+    if (betAmount > balance) {
+        alert('Not enough balance to place this bet.');
         return;
     }
-    bet = betAmount;
-    bankroll -= bet;
-    dealInitialCards();
-    render();
+    players[currentPlayerIndex].bet = betAmount;
+    balance -= betAmount;
+    currentPlayerIndex++;
+    if (currentPlayerIndex < numPlayers) {
+        document.getElementById('status').innerText = `${players[currentPlayerIndex].name}, place your bet.`;
+    } else {
+        document.getElementById('betting-controls').style.display = 'none';
+        document.getElementById('player-controls').style.display = 'block';
+        dealInitialCards();
+    }
 }
 
+// Deal initial cards
 function dealInitialCards() {
-    outcome = null;
     deck = getNewShuffledDeck();
     dealer.hand = [deck.pop(), deck.pop()];
-    players.forEach(player => {
+    dealer.total = getHandTotal(dealer.hand);
+    for (let player of players) {
         player.hand = [deck.pop(), deck.pop()];
         player.total = getHandTotal(player.hand);
-    });
-    dealer.total = getHandTotal(dealer.hand);
-
-    if (dealer.total === 21) {
-        outcome = 'Dealer has Blackjack!';
-        settleBet();
-    } else if (players.some(player => player.total === 21)) {
-        outcome = 'Player has Blackjack!';
-        settleBet();
     }
-
     render();
+    checkInitialBlackjack();
 }
 
-function handleHit() {
-    if (currentPlayer >= players.length) {
-        return;
+// Check for initial blackjack
+function checkInitialBlackjack() {
+    for (let player of players) {
+        if (player.total === 21) {
+            balance += player.bet * 2.5;
+            player.bet = 0;
+            document.getElementById('status').innerText = `${player.name} hit Blackjack! Wins 2.5x the bet.`;
+        }
     }
-    const player = players[currentPlayer];
+    if (dealer.total === 21) {
+        for (let player of players) {
+            if (player.bet > 0) {
+                player.bet = 0;
+                document.getElementById('status').innerText = `${player.name} loses to dealer's Blackjack.`;
+            }
+        }
+    }
+}
+
+// Handle hit button
+function hit() {
+    let player = players[currentPlayerIndex];
     player.hand.push(deck.pop());
     player.total = getHandTotal(player.hand);
-
     if (player.total > 21) {
-        outcome = `${player.name} is bust!`;
-        currentPlayer++;
-    }
-
-    render();
-}
-
-function handleStand() {
-    currentPlayer++;
-    if (currentPlayer >= players.length) {
-        while (dealer.total < 17) {
-            dealer.hand.push(deck.pop());
-            dealer.total = getHandTotal(dealer.hand);
-        }
-        determineOutcome();
-    }
-    render();
-}
-
-function determineOutcome() {
-    if (dealer.total > 21) {
-        outcome = 'Dealer busts!';
+        player.bet = 0;
+        document.getElementById('status').innerText = `${player.name} busts. Loses the bet.`;
+        nextPlayer();
+    } else if (player.total === 21) {
+        balance += player.bet * 2;
+        player.bet = 0;
+        document.getElementById('status').innerText = `${player.name} hits 21! Wins 2x the bet.`;
+        nextPlayer();
     } else {
-        outcome = players.map(player => {
-            if (player.total > 21) return `${player.name} busts!`;
-            if (player.total > dealer.total) return `${player.name} wins!`;
-            if (player.total < dealer.total) return `${player.name} loses!`;
-            return `${player.name} ties!`;
-        }).join(' ');
+        render();
     }
-    settleBet();
+}
+
+// Handle stand button
+function stand() {
+    nextPlayer();
+}
+
+// Move to next player or dealer
+function nextPlayer() {
+    currentPlayerIndex++;
+    if (currentPlayerIndex >= numPlayers) {
+        currentPlayerIndex = 0;
+        dealerTurn();
+    } else {
+        document.getElementById('status').innerText = `${players[currentPlayerIndex].name}'s turn.`;
+        render();
+    }
+}
+
+// Dealer's turn
+function dealerTurn() {
+    while (dealer.total < 17) {
+        dealer.hand.push(deck.pop());
+        dealer.total = getHandTotal(dealer.hand);
+    }
+    checkWinner();
+}
+
+// Check the winner
+function checkWinner() {
+    for (let player of players) {
+        if (dealer.total > 21) {
+            balance += player.bet * 2;
+            document.getElementById('status').innerText = `${player.name} wins against dealer bust.`;
+        } else if (player.total > dealer.total) {
+            balance += player.bet * 2;
+            document.getElementById('status').innerText = `${player.name} wins with higher total.`;
+        } else if (player.total < dealer.total) {
+            document.getElementById('status').innerText = `${player.name} loses with lower total.`;
+        } else {
+            balance += player.bet;
+            document.getElementById('status').innerText = `${player.name} pushes with the dealer.`;
+        }
+        player.bet = 0;
+    }
     render();
 }
 
-function settleBet() {
-    // Implement bet settlement logic here
+// Reset the game
+function resetGame() {
+    balance = 20000;
+    initGame();
 }
+
+// Render the game state
+function render() {
+    document.getElementById('balance').innerText = `Balance: $${balance}`;
+    let dealerCardsHTML = '';
+    for (let card of dealer.hand) {
+        dealerCardsHTML += `<div class="card">${card.value} of ${card.suit}</div>`;
+    }
+    document.getElementById('dealer-cards').innerHTML = dealerCardsHTML;
+
+    let playersHTML = '';
+    for (let player of players) {
+        let playerCardsHTML = '';
+        for (let card of player.hand) {
+            playerCardsHTML += `<div class="card">${card.value} of ${card.suit}</div>`;
+        }
+        playersHTML += `<div class="player-area">
+                            <h3>${player.name}</h3>
+                            <div class="card-container">${playerCardsHTML}</div>
+                            <div>Total: ${player.total}</div>
+                        </div>`;
+    }
+    document.getElementById('players-container').innerHTML = playersHTML;
+}
+
+// Event listeners
+document.getElementById('start-game').addEventListener('click', startGame);
+document.getElementById('submit-names').addEventListener('click', submitNames);
+document.getElementById('place-bet').addEventListener('click', placeBet);
+document.getElementById('hit-button').addEventListener('click', hit);
+document.getElementById('stand-button').addEventListener('click', stand);
+document.getElementById('reset-button').addEventListener('click', resetGame);
+
+// Initialize the game on load
+initGame();

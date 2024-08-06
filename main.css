@@ -16,7 +16,7 @@ body {
     margin-bottom: 20px;
 }
 
-#deck-container {
+#deck-container, #dealer-cards, #players-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -38,15 +38,9 @@ body {
     margin: 5px;
 }
 
-#dealer-cards, #players-container {
-    margin: 20px auto;
-}
-
 .card-container {
     display: flex;
     gap: 10px;
-    justify-content: center;
-    flex-wrap: wrap;
 }
 
 #players-container {
@@ -71,4 +65,10 @@ body {
 #balance {
     margin-top: 10px;
     font-size: 20px;
+}
+
+input, button {
+    padding: 10px;
+    margin: 5px;
+    font-size: 16px;
 }
