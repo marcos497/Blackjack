@@ -17,7 +17,7 @@ h1, h2 {
     text-align: center;
 }
 
-input[type="number"] {
+input[type="number"], input[type="text"] {
     margin: 10px;
     padding: 5px;
     border-radius: 5px;
@@ -39,11 +39,15 @@ button:hover {
     background-color: #45a049;
 }
 
-#player-info-display, #game-controls, #betting-table {
+#player-info-display, #game-controls, #betting-table, #game-table {
     margin: 20px;
 }
 
 #game-log {
     margin: 20px;
     font-size: 18px;
+}
+
+.player-bet, .player-info {
+    margin: 10px 0;
 }

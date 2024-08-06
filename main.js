@@ -8,12 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerNamesDiv = document.getElementById('player-names');
     const bettingTableDiv = document.getElementById('betting-table');
     const submitBetsButton = document.getElementById('submit-bets');
+    const gameTableDiv = document.getElementById('game-table');
     const hitButton = document.getElementById('hit');
     const stayButton = document.getElementById('stay');
     const restartButton = document.getElementById('restart-game');
     const gameLogDiv = document.getElementById('game-log');
 
     let players = [];
+    let dealer = { name: 'Dealer', balance: 0, cards: [] };
 
     // Start button functionality
     startButton.addEventListener('click', () => {
@@ -48,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 1; i <= numPlayers; i++) {
                 const name = document.getElementById(`player-${i}`).value;
                 if (name) {
-                    players.push({ name, balance: 20000, bet: 0 });
+                    players.push({ name, balance: 20000, bet: 0, cards: [] });
                 }
             }
             introPage.style.display = 'none';
@@ -90,9 +92,36 @@ document.addEventListener('DOMContentLoaded', () => {
         if (validBets) {
             bettingPage.style.display = 'none';
             gamePage.style.display = 'block';
+            showGameTable();
             startGame();
         }
     });
+
+    // Show game table functionality
+    function showGameTable() {
+        gameTableDiv.innerHTML = '';
+        const dealerDiv = document.createElement('div');
+        dealerDiv.className = 'player-info';
+        dealerDiv.innerHTML = `
+            <h3>${dealer.name}</h3>
+            <p>Balance: $${dealer.balance}</p>
+            <p>Cards: <span id="dealer-cards"></span></p>
+        `;
+        gameTableDiv.appendChild(dealerDiv);
+
+        players.forEach((player, index) => {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-info';
+            playerDiv.id = `player-info-${index}`;
+            playerDiv.innerHTML = `
+                <h3>${player.name}</h3>
+                <p>Balance: $${player.balance}</p>
+                <p>Bet: $${player.bet}</p>
+                <p>Cards: <span id="player-cards-${index}"></span></p>
+            `;
+            gameTableDiv.appendChild(playerDiv);
+        });
+    }
 
     // Hit button functionality
     hitButton.addEventListener('click', () => {
@@ -112,7 +141,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function startGame() {
-        // Implement the logic to start the game
-        gameLogDiv.textContent += 'Game started.\n';
+        gameLogDiv.textContent += 'Game started. Dealer is shuffling and dealing cards...\n';
+        // Shuffle and deal cards
+        shuffleAndDeal();
+    }
+
+    function shuffleAndDeal() {
+        // Implement shuffling and dealing logic here
+        // For now, we will just simulate with a placeholder
+        gameLogDiv.textContent += 'Dealer shuffles the deck.\n';
+        gameLogDiv.textContent += 'Dealer deals cards to each player.\n';
+        players.forEach((player, index) => {
+            const card1 = drawCard();
+            const card2 = drawCard();
+            player.cards.push(card1, card2);
+            document.getElementById(`player-cards-${index}`).textContent = `${card1}, ${card2}`;
+        });
+        const dealerCard1 = drawCard();
+        dealer.cards.push(dealerCard1);
+        document.getElementById('dealer-cards').textContent = `${dealerCard1}, [hidden]`;
+    }
+
+    function drawCard() {
+        // Implement card drawing logic here
+        // For now, we will just return a placeholder
+        const suits = ['♣', '♦', '♥', '♠'];
+        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const suit = suits[Math.floor(Math.random() * suits.length)];
+        const value = values[Math.floor(Math.random() * values.length)];
+        return `${value}${suit}`;
     }
 });
