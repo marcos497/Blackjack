@@ -13,7 +13,7 @@ h1, h2 {
     text-align: center;
 }
 
-#landing-page, #intro-page, #game-page {
+#landing-page, #intro-page, #betting-page, #game-page {
     text-align: center;
 }
 
@@ -39,7 +39,7 @@ button:hover {
     background-color: #45a049;
 }
 
-#player-info-display, #game-controls {
+#player-info-display, #game-controls, #betting-table {
     margin: 20px;
 }
 

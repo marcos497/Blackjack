@@ -2,22 +2,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const startButton = document.getElementById('start-button');
     const introPage = document.getElementById('intro-page');
     const submitPlayersButton = document.getElementById('submit-players');
+    const bettingPage = document.getElementById('betting-page');
     const gamePage = document.getElementById('game-page');
     const numPlayersInput = document.getElementById('num-players');
     const playerNamesDiv = document.getElementById('player-names');
-    const placeBetButton = document.getElementById('place-bet');
-    const betAmountInput = document.getElementById('bet-amount');
-    const playerBalanceSpan = document.getElementById('player-balance');
-    const playerBetSpan = document.getElementById('player-bet');
+    const bettingTableDiv = document.getElementById('betting-table');
+    const submitBetsButton = document.getElementById('submit-bets');
     const hitButton = document.getElementById('hit');
     const stayButton = document.getElementById('stay');
     const restartButton = document.getElementById('restart-game');
     const gameLogDiv = document.getElementById('game-log');
 
     let players = [];
-    let currentPlayerIndex = 0;
-    let playerBalance = 20000;
-    let playerBet = 0;
 
     // Start button functionality
     startButton.addEventListener('click', () => {
@@ -56,27 +52,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             introPage.style.display = 'none';
-            gamePage.style.display = 'block';
-            updatePlayerInfo();
+            bettingPage.style.display = 'block';
+            showBettingTable();
         });
 
         playerNamesDiv.appendChild(submitNamesButton);
     });
 
-    // Place bet functionality
-    placeBetButton.addEventListener('click', () => {
-        const betAmount = parseInt(betAmountInput.value);
-        if (isNaN(betAmount) || betAmount <= 0 || betAmount > playerBalance) {
-            alert('Invalid bet amount.');
-            return;
-        }
-        playerBet = betAmount;
-        playerBalance -= betAmount;
-        playerBetSpan.textContent = playerBet;
-        playerBalanceSpan.textContent = playerBalance;
+    // Show betting table functionality
+    function showBettingTable() {
+        bettingTableDiv.innerHTML = '';
+        players.forEach((player, index) => {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-bet';
+            playerDiv.innerHTML = `
+                <p>${player.name} - Balance: $${player.balance}</p>
+                <input type="number" id="bet-${index}" placeholder="Enter bet amount" min="1" max="${player.balance}">
+            `;
+            bettingTableDiv.appendChild(playerDiv);
+        });
+    }
 
-        // Proceed with the game logic
-        startGame();
+    // Submit bets functionality
+    submitBetsButton.addEventListener('click', () => {
+        let validBets = true;
+        players.forEach((player, index) => {
+            const betAmount = parseInt(document.getElementById(`bet-${index}`).value);
+            if (isNaN(betAmount) || betAmount <= 0 || betAmount > player.balance) {
+                alert(`Invalid bet amount for ${player.name}.`);
+                validBets = false;
+                return;
+            }
+            player.bet = betAmount;
+            player.balance -= betAmount;
+        });
+
+        if (validBets) {
+            bettingPage.style.display = 'none';
+            gamePage.style.display = 'block';
+            startGame();
+        }
     });
 
     // Hit button functionality
@@ -95,11 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
     restartButton.addEventListener('click', () => {
         location.reload();
     });
-
-    function updatePlayerInfo() {
-        playerBalanceSpan.textContent = playerBalance;
-        playerBetSpan.textContent = playerBet;
-    }
 
     function startGame() {
         // Implement the logic to start the game
