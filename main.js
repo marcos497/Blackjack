@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
         shuffleDeck(deck);
         messages.innerHTML = '';
         gameContainer.innerHTML = '';
-        playerBalances = {};
     }
 
     function startGame() {
@@ -194,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
         players = playerNames.map(name => ({ name, hand: [], balance: 20000, bet: 0 }));
         playersForm.style.display = 'none';
         gameContainer.style.display = 'block';
+        placeBetBtn.style.display = 'block';
         dealInitialCards();
     });
 

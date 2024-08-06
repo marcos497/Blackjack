@@ -5,34 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blackjack 21</title>
     <link rel="stylesheet" href="main.css">
-    <script defer src="main.js"></script>
 </head>
 <body>
-    <!-- Landing Page -->
     <div id="landingPage">
         <h1>Welcome to Blackjack 21</h1>
-        <button id="startButton">Start Game</button>
+        <button id="startBtn">Start Game</button>
     </div>
 
-    <!-- Intro Page -->
-    <div id="introPage" style="display: none;">
-        <h2>Enter Player Details</h2>
-        <div id="playerInputs">
-            <div class="player-input">
-                <label>Name: <input type="text" class="player-name"></label>
-                <label>Balance: <input type="number" class="player-balance" value="1000"></label>
-            </div>
+    <div id="playersForm" style="display: none;">
+        <h2>Enter Player Names</h2>
+        <form>
+            <div id="playerInputs"></div>
+            <button type="submit">Submit Players</button>
+        </form>
+    </div>
+
+    <div id="gameContainer" style="display: none;">
+        <div id="dealer" class="player">
+            <h3>Dealer</h3>
+            <p>Balance: $<span id="balance-Dealer">0</span></p>
+            <p>Hand: <span id="hand-Dealer"></span></p>
         </div>
-        <button id="addPlayerButton">Add Another Player</button>
-        <button id="initiateGameButton">Initiate Game</button>
+        <div id="messages"></div>
+        <button id="placeBetBtn" style="display: none;">Place Bet</button>
+        <button id="hitBtn" style="display: none;">Hit</button>
+        <button id="stayBtn" style="display: none;">Stay</button>
+        <button id="restartBtn" style="display: none;">Restart Game</button>
     </div>
 
-    <!-- Game Page -->
-    <div id="gamePage" style="display: none;">
-        <h2>Blackjack 21</h2>
-        <div id="dealer"></div>
-        <div id="players"></div>
-        <div id="actions"></div>
-    </div>
+    <script src="main.js"></script>
 </body>
 </html>
