@@ -1,69 +1,47 @@
-/* main.css */
-
-/* Basic reset and body styling */
+/* General body styling */
 body {
-    margin: 0;
-    padding: 0;
     font-family: Arial, sans-serif;
-    background-color: rgb(31, 141, 31); /* Set the background color to green */
-    color: white; /* Set the text color to white for better contrast */
+    background-color: #008000;
+    color: #fff;
+    text-align: center;
 }
 
-/* Ensure proper visibility for pages and elements */
+/* Header styling */
+h1, h2 {
+    margin-top: 20px;
+}
+
+/* Container styling for each page */
 #landing-page, #intro-page, #betting-page, #game-page {
-    background-color: inherit; /* Ensure these pages inherit the green background color from body */
-    padding: 20px;
-    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
 }
 
-/* General layout styles */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* Styling for buttons */
-button {
-    background-color: #fff;
-    color: green;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
+/* Input and button styling */
+input, button {
+    margin: 10px;
+    padding: 10px;
     font-size: 16px;
 }
 
-button:hover {
-    background-color: #f0f0f0;
+/* Specific styling for player names input fields */
+#player-names input {
+    display: block;
 }
 
-/* Styling for game elements */
-.player-info, .player-bet {
-    margin-bottom: 20px;
+/* Styling for player betting and info sections */
+.player-bet, .player-info {
+    margin: 10px;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid #fff;
     border-radius: 5px;
+    background-color: #006400;
 }
 
-.player-info {
-    background-color: #393232;
-    color: rgb(203, 210, 203);
-}
-
-.player-bet {
-    background-color: #403737;
-}
-
-#game-controls {
-    margin-top: 20px;
-}
-
-/* Styling for game log */
-#game-log {
-    margin-top: 20px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #5a5252;
-    color: green;
+/* Styling for player control buttons */
+.player-controls button {
+    margin: 5px;
 }

@@ -4,48 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blackjack Game</title>
+    <!-- Link to the external CSS file -->
     <link rel="stylesheet" href="main.css">
-    <style>
-        /* Inline styles for background color and text color */
-        body {
-            background-color: green; /* Set the background color to green */
-            color: white; /* Set the text color to white for better contrast */
-        }
-    </style>
 </head>
 <body>
-    <img src="" alt="">
-    <!-- Landing page -->
+    <!-- Landing page with a start button -->
     <div id="landing-page">
         <h1>Welcome to Blackjack</h1>
         <button id="start-button">Start Game</button>
     </div>
 
-    <!-- Intro page -->
+    <!-- Intro page for entering the number of players -->
     <div id="intro-page" style="display: none;">
         <h2>Enter Number of Players</h2>
-        <input type="number" id="num-players" min="1" max="8" placeholder="Number of players">
+        <input type="number" id="num-players" min="1" max="8" placeholder="Number of Players">
         <button id="submit-players">Submit</button>
         <div id="player-names"></div>
     </div>
 
-    <!-- Betting page -->
+    <!-- Betting page for placing bets -->
     <div id="betting-page" style="display: none;">
         <h2>Place Your Bets</h2>
         <div id="betting-table"></div>
         <button id="submit-bets">Submit Bets</button>
     </div>
 
-    <!-- Game page -->
+    <!-- Game page where the actual game is played -->
     <div id="game-page" style="display: none;">
+        <h2>Game in Progress</h2>
         <div id="game-table"></div>
-        <div id="game-controls">
-            <button id="hit">Hit</button>
-            <button id="stay">Stay</button>
-        </div>
         <div id="game-log"></div>
     </div>
 
+    <!-- Link to the external JavaScript file -->
     <script src="main.js"></script>
 </body>
 </html>
