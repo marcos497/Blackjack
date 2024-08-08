@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const placeBetButton = document.getElementById('place-bet-button');
     const playerHandElement = document.getElementById('player-hand');
     const dealerHandElement = document.getElementById('dealer-hand');
-    
+    const messageElement = document.getElementById('message'); // New message element
+
     let balance = 1000;
     let betAmount = 10;
     let deck = [];
@@ -51,6 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
         balanceElement.textContent = balance;
     }
 
+    function displayMessage(message) {
+        messageElement.textContent = message;
+    }
+
     function startNewGame() {
         playerHand = [];
         dealerHand = [];
@@ -58,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dealInitialCards();
         displayHand(playerHand, playerHandElement);
         displayHand(dealerHand, dealerHandElement);
+        displayMessage('Place your bet and start the game!');
     }
 
     function dealInitialCards() {
@@ -69,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playerHand.push(deck.pop());
         displayHand(playerHand, playerHandElement);
         if (calculateHandValue(playerHand) > 21) {
-            alert('Player busts! You lose.');
+            displayMessage('Player busts! You lose.');
             balance -= betAmount;
             updateBalance();
             startNewGame();
@@ -84,13 +90,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerValue = calculateHandValue(playerHand);
         const dealerValue = calculateHandValue(dealerHand);
         if (dealerValue > 21 || playerValue > dealerValue) {
-            alert('Player wins!');
+            displayMessage('Player wins!');
             balance += betAmount;
         } else if (playerValue < dealerValue) {
-            alert('Dealer wins!');
+            displayMessage('Dealer wins!');
             balance -= betAmount;
         } else {
-            alert('It\'s a tie!');
+            displayMessage('It\'s a tie!');
         }
         updateBalance();
         startNewGame();
@@ -100,8 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const bet = parseInt(betAmountElement.value, 10);
         if (bet > 0 && bet <= balance) {
             betAmount = bet;
+            displayMessage('Bet placed. Good luck!');
         } else {
-            alert('Invalid bet amount');
+            displayMessage('Invalid bet amount');
         }
     }
 

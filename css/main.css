@@ -55,3 +55,11 @@ button:hover {
     justify-content: center;
     align-items: center;
 }
+
+/* Message */
+#message {
+    margin: 20px;
+    padding: 10px;
+    font-size: 1.2em;
+    color: #dc3545; /* Red color for messages */
+}
