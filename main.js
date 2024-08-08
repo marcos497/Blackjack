@@ -1,5 +1,10 @@
-// Wait for the DOM to be fully loaded before running the script
+/*----- functions -----*/
 document.addEventListener('DOMContentLoaded', () => {
+    initialize();
+    render();
+});
+
+function initialize() {
     // Get references to various DOM elements for manipulation
     const startButton = document.getElementById('start-button');
     const introPage = document.getElementById('intro-page');
@@ -151,74 +156,4 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleHit(event) {
         if (gameOver) return;
 
-        const index = parseInt(event.target.getAttribute('data-index'));
-        const player = players[index];
-
-        if (player.hasStood) {
-            alert(`${player.name} has already stood.`);
-            return;
-        }
-
-        const card = drawCard();
-        player.cards.push(card);
-        render();
-    }
-
-    // Function to handle the stay action
-    function handleStay(event) {
-        const index = parseInt(event.target.getAttribute('data-index'));
-        players[index].hasStood = true;
-        render();
-    }
-
-    // Function to start the game
-    function startGame() {
-        // Deal initial two cards to each player and dealer
-        players.forEach(player => {
-            player.cards = [drawCard(), drawCard()];
-        });
-        dealer.cards = [drawCard(), drawCard()];
-
-        render();
-    }
-
-    // Function to draw a card (placeholder, should be implemented)
-    function drawCard() {
-        // Placeholder function, you can implement actual card drawing logic
-        const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
-        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        const suit = suits[Math.floor(Math.random() * suits.length)];
-        const value = values[Math.floor(Math.random() * values.length)];
-        return `${value} of ${suit}`;
-    }
-
-    // Function to render the game state
-    function render() {
-        // Render dealer's cards
-        document.getElementById('dealer-cards').textContent = dealer.cards.join(', ');
-
-        // Render each player's cards and status
-        players.forEach((player, index) => {
-            document.getElementById(`player-cards-${index}`).textContent = player.cards.join(', ');
-            const statusElement = document.getElementById(`player-status-${index}`);
-            if (player.hasStood) {
-                statusElement.textContent = 'Stood';
-            } else {
-                statusElement.textContent = '';
-            }
-        });
-
-        // Check if all players have stood to end the game
-        if (players.every(player => player.hasStood)) {
-            gameOver = true;
-            endGame();
-        }
-    }
-
-    // Function to end the game (placeholder, should be implemented)
-    function endGame() {
-        // Placeholder function, you can implement actual game-ending logic
-        alert('Game Over!');
-    }
-});
-
+        const index = parseInt(event.target.getAttribute('data
