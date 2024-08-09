@@ -73,9 +73,9 @@ function getCardValue(card) {
  */
 function playerChoosesAceValue() {
     let aceValue;
-    do {
+    while (![1, 11].includes(aceValue)) {
         aceValue = parseInt(prompt("You've been dealt an Ace! Choose its value: 1 or 11", "11"), 10);
-    } while (![1, 11].includes(aceValue)); // Ensures valid input
+    }
     return aceValue;
 }
 
@@ -111,10 +111,11 @@ function updateBalance() {
 }
 
 /**
- * Displays a message to the user.
+ * Displays a message to the user in the console.
  * @param {string} message - The message to display.
  */
 function displayMessage(message) {
+    console.log(message);
     messageElement.textContent = message;
 }
 
@@ -264,14 +265,12 @@ function evaluateGameResults() {
         players.forEach(player => {
             if (player.status === 'stand' || player.status === '21') {
                 balance += player.bet;
-            } else if (player.status === 'busted') {
-                balance -= player.bet;
             }
         });
     } else {
         players.forEach(player => {
-            const playerValue = calculateHandValue(player.hand);
             if (player.status === 'stand' || player.status === '21') {
+                const playerValue = calculateHandValue(player.hand);
                 if (playerValue > dealerValue) {
                     displayMessage(`${player.name} wins!`);
                     balance += player.bet;
@@ -279,31 +278,31 @@ function evaluateGameResults() {
                     displayMessage(`${player.name} loses.`);
                     balance -= player.bet;
                 } else {
-                    displayMessage(`${player.name} ties with the dealer.`);
+                    displayMessage(`${player.name} ties.`);
                 }
             }
         });
     }
-    render();
+    updateBalance();
 }
 
 /**
- * Places a bet for the player and transitions the game state to 'playing'.
+ * Places the bet for the player and transitions the game state.
  */
 function placeBet() {
     if (gameState !== 'betting') {
-        displayMessage('You can only place a bet while in the betting phase.');
+        displayMessage('You can only place a bet while the game is in the betting state.');
         return;
     }
     const betAmount = parseInt(betAmountElement.value, 10);
-    if (betAmount <= 0 || betAmount > balance) {
+    if (isNaN(betAmount) || betAmount <= 0 || betAmount > balance) {
         displayMessage('Invalid bet amount.');
         return;
     }
     players.forEach(player => {
         player.bet = betAmount;
     });
+    displayMessage('Bets placed. Game is starting.');
     gameState = 'playing';
-    displayMessage('Bets placed. The game is now in progress.');
     render();
 }
