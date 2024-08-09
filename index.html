@@ -4,42 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blackjack Game</title>
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="cardstarter.css">
 </head>
 <body>
-    <h1>Blackjack Game</h1>
-    
-    <!-- Setup Section -->
-    <div id="setup-section">
-        <label for="num-players">Number of Players (1-8):</label>
-        <input type="number" id="num-players" min="1" max="8" value="1">
-        
-        <div id="player-names">
-            <!-- Player name inputs will be dynamically inserted here -->
-        </div>
-        
-        <button id="start-game-button">Start Game</button>
-    </div>
-    
-    <!-- Game Section -->
-    <div id="game-section" style="display:none;">
-        <div>
-            <span>Balance: $<span id="balance">25000</span></span>
-        </div>
-        <div>
-            <label for="bet-amount">Bet Amount: $</label>
-            <input type="number" id="bet-amount" min="1" value="10">
-        </div>
-        <div id="player-hand"></div>
-        <div id="dealer-hand"></div>
-        <button id="new-game-button" style="display:none;">New Game</button>
-        <button id="hit-button" style="display:none;">Hit</button>
-        <button id="stand-button" style="display:none;">Stand</button>
-        <button id="place-bet-button" style="display:none;">Place Bet</button>
-        <button id="restart-game-button" style="display:none;">Restart Game</button>
-        <div id="message"></div>
+    <!-- Player Setup Form -->
+    <div id="player-setup">
+        <h2>Enter Player Information</h2>
+        <label for="numPlayers">Number of Players:</label>
+        <input type="number" id="numPlayers" min="1" max="5" required>
+        <button id="submitPlayers">Submit</button>
+        <div id="playerNames" style="display: none;"></div>
+        <button id="submitNames" style="display: none;">Submit Names</button>
     </div>
 
-    <script src="js/main.js"></script>
+    <!-- Betting Form -->
+    <div id="betting-phase" style="display: none;">
+        <h2>Place Your Bets</h2>
+        <div id="bets"></div>
+        <button id="submitBets">Submit Bets</button>
+    </div>
+
+    <!-- Game Area -->
+    <div id="game" style="display: none;">
+        <h2>Game in Progress</h2>
+        <div id="dealer-cards" class="dealer-area"></div>
+        <div id="player-cards" class="game-area"></div>
+    </div>
+
+    <script src="main.js"></script>
 </body>
 </html>
