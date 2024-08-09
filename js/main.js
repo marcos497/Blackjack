@@ -2,10 +2,9 @@
 document.addEventListener('DOMContentLoaded', init);
 
 // Global variables to manage game state
-let balance = 1000;
-let betAmount = 10;
+let balance = 25000; // Starting balance
 let deck = [];
-let playerHand = [];
+let players = [];
 let dealerHand = [];
 let gameState = 'waiting'; // Possible states: 'waiting', 'betting', 'playing', 'finished'
 
@@ -36,7 +35,7 @@ function init() {
  * Renders the current state of the game to the user interface.
  */
 function render() {
-    displayHand(playerHand, playerHandElement);
+    displayHand(players[0].hand, playerHandElement); // Display the first player's hand
     displayHand(dealerHand, dealerHandElement);
     updateBalance();
     setButtonState();
@@ -44,7 +43,6 @@ function render() {
 
 /**
  * Creates and shuffles a new deck of cards.
- * The deck is populated with standard 52 cards (4 suits, 13 values each).
  */
 function createDeck() {
     const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
@@ -60,8 +58,6 @@ function createDeck() {
 
 /**
  * Calculates the value of a card.
- * King, Queen, and Jack are worth 10 points.
- * Ace can be worth 1 or 11 points, depending on the player's choice.
  * @param {Object} card - The card object.
  * @returns {number} - The value of the card.
  */
@@ -85,7 +81,6 @@ function playerChoosesAceValue() {
 
 /**
  * Calculates the total value of a hand.
- * The value adjusts for Aces if necessary to avoid busting.
  * @param {Array} hand - The array of card objects.
  * @returns {number} - The total value of the hand.
  */
@@ -101,7 +96,6 @@ function calculateHandValue(hand) {
 
 /**
  * Displays the hand of cards in the specified DOM element.
- * Each card is displayed as a string combining its value and suit.
  * @param {Array} hand - The array of card objects.
  * @param {HTMLElement} element - The DOM element to display the hand in.
  */
@@ -111,7 +105,6 @@ function displayHand(hand, element) {
 
 /**
  * Updates the displayed balance.
- * The player's current balance is shown in the DOM.
  */
 function updateBalance() {
     balanceElement.textContent = balance;
@@ -119,7 +112,6 @@ function updateBalance() {
 
 /**
  * Displays a message to the user.
- * This is used to provide feedback on game progress and decisions.
  * @param {string} message - The message to display.
  */
 function displayMessage(message) {
@@ -128,7 +120,6 @@ function displayMessage(message) {
 
 /**
  * Sets the enabled/disabled state of buttons based on the current game state.
- * Buttons are enabled only when relevant actions are available to the player.
  */
 function setButtonState() {
     if (gameState === 'waiting') {
@@ -163,91 +154,156 @@ function startNewGame() {
         displayMessage('Please finish the current game before starting a new one.');
         return;
     }
-    playerHand = [];
+    // Prompt players to enter their names and create player objects
+    const numPlayers = parseInt(prompt("Enter the number of players (1 or more):", "1"), 10);
+    players = [];
+    for (let i = 1; i <= numPlayers; i++) {
+        const name = prompt(`Enter name for Player ${i}:`);
+        players.push({
+            name: name,
+            hand: [],
+            bet: 0,
+            status: 'active' // Possible statuses: 'active', 'busted', '21', 'stand'
+        });
+    }
     dealerHand = [];
     createDeck();
     dealInitialCards();
-    displayMessage('Game started. Place your bet.');
+    displayMessage('Game started. Place your bets.');
     gameState = 'betting';
     render();
 }
 
 /**
- * Deals the initial cards to the player and the dealer.
- * Each is dealt two cards at the beginning of the game.
+ * Deals the initial cards to the players and the dealer.
  */
 function dealInitialCards() {
-    playerHand.push(deck.pop(), deck.pop());
-    dealerHand.push(deck.pop(), deck.pop());
+    players.forEach(player => {
+        player.hand = [deck.pop(), deck.pop()];
+    });
+    dealerHand = [deck.pop(), deck.pop()];
 }
 
 /**
  * Handles the player's decision to hit.
  * A new card is dealt to the player, and the hand is evaluated.
- * If the player busts (hand value exceeds 21), they lose.
  */
 function hit() {
     if (gameState !== 'playing') {
         displayMessage('You can only hit while the game is in progress.');
         return;
     }
-    playerHand.push(deck.pop());
-    render();
-    if (calculateHandValue(playerHand) > 21) {
-        displayMessage('Player busts! You lose.');
-        balance -= betAmount;
-        gameState = 'finished';
-        render();
-        startNewGame();
+    const currentPlayer = players.find(player => player.status === 'active');
+    if (!currentPlayer) {
+        displayMessage('No active players to hit.');
+        return;
     }
+    currentPlayer.hand.push(deck.pop());
+    render();
+    const playerValue = calculateHandValue(currentPlayer.hand);
+    if (playerValue > 21) {
+        currentPlayer.status = 'busted';
+        displayMessage(`${currentPlayer.name} busts! You lose.`);
+        balance -= currentPlayer.bet;
+    } else if (playerValue === 21) {
+        currentPlayer.status = '21';
+        displayMessage(`${currentPlayer.name} hits 21! You win 1.5x your bet.`);
+        balance += currentPlayer.bet * 1.5;
+    }
+    checkAllPlayersStatus();
 }
 
 /**
  * Handles the player's decision to stand.
- * The dealer then plays, drawing cards until their hand is worth at least 17.
- * The outcome of the game is then determined.
+ * The game progresses to the next player or dealer phase.
  */
 function stand() {
     if (gameState !== 'playing') {
         displayMessage('You can only stand while the game is in progress.');
         return;
     }
+    const currentPlayer = players.find(player => player.status === 'active');
+    if (currentPlayer) {
+        currentPlayer.status = 'stand';
+        displayMessage(`${currentPlayer.name} stands.`);
+        checkAllPlayersStatus();
+    }
+}
+
+/**
+ * Checks if all players have made their move (stand or bust).
+ * If all players have acted, the dealer's turn begins.
+ */
+function checkAllPlayersStatus() {
+    if (players.every(player => player.status !== 'active')) {
+        dealerPlay();
+    }
+}
+
+/**
+ * Handles the dealer's turn.
+ * The dealer hits until reaching at least 17 or busting.
+ */
+function dealerPlay() {
+    gameState = 'finished';
+    render();
     while (calculateHandValue(dealerHand) < 17) {
         dealerHand.push(deck.pop());
         render();
     }
-    const playerValue = calculateHandValue(playerHand);
-    const dealerValue = calculateHandValue(dealerHand);
-    if (dealerValue > 21 || playerValue > dealerValue) {
-        displayMessage('Player wins!');
-        balance += betAmount;
-    } else if (playerValue < dealerValue) {
-        displayMessage('Dealer wins!');
-        balance -= betAmount;
-    } else {
-        displayMessage('It\'s a tie!');
-    }
-    gameState = 'finished';
-    render();
-    startNewGame();
+    evaluateGameResults();
 }
 
 /**
- * Handles the player's bet placement.
- * The bet amount is validated, and the game moves to the 'playing' state.
+ * Evaluates the game results based on the dealer's hand and each player's hand.
+ */
+function evaluateGameResults() {
+    const dealerValue = calculateHandValue(dealerHand);
+    if (dealerValue > 21) {
+        displayMessage('Dealer busts! Players with bets win.');
+        players.forEach(player => {
+            if (player.status === 'stand' || player.status === '21') {
+                balance += player.bet;
+            } else if (player.status === 'busted') {
+                balance -= player.bet;
+            }
+        });
+    } else {
+        players.forEach(player => {
+            const playerValue = calculateHandValue(player.hand);
+            if (player.status === 'stand' || player.status === '21') {
+                if (playerValue > dealerValue) {
+                    displayMessage(`${player.name} wins!`);
+                    balance += player.bet;
+                } else if (playerValue < dealerValue) {
+                    displayMessage(`${player.name} loses.`);
+                    balance -= player.bet;
+                } else {
+                    displayMessage(`${player.name} ties with the dealer.`);
+                }
+            }
+        });
+    }
+    render();
+}
+
+/**
+ * Places a bet for the player and transitions the game state to 'playing'.
  */
 function placeBet() {
     if (gameState !== 'betting') {
-        displayMessage('You can only place a bet at the beginning of the game.');
+        displayMessage('You can only place a bet while in the betting phase.');
         return;
     }
-    const bet = parseInt(betAmountElement.value, 10);
-    if (bet > 0 && bet <= balance) {
-        betAmount = bet;
-        displayMessage('Bet placed. You can now start the game.');
-        gameState = 'playing';
-        render();
-    } else {
+    const betAmount = parseInt(betAmountElement.value, 10);
+    if (betAmount <= 0 || betAmount > balance) {
         displayMessage('Invalid bet amount.');
+        return;
     }
+    players.forEach(player => {
+        player.bet = betAmount;
+    });
+    gameState = 'playing';
+    displayMessage('Bets placed. The game is now in progress.');
+    render();
 }
