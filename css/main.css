@@ -5,78 +5,78 @@ body {
     padding: 0;
     background-color: rgb(31, 141, 31); /* Background color for the entire page */
     color: white; /* Default text color for readability */
-}
-
-/* Page containers styling */
-#landing-page, #intro-page, #betting-page, #game-page {
+ }
+  
+ /* Page containers styling */
+ #landing-page, #intro-page, #betting-page, #game-page {
     background-color: inherit; /* Inherit background color from body */
     padding: 20px;
     border-radius: 8px;
     margin: 10px;
-}
-
-/* Card container to ensure proper display */
-.card-container {
+ }
+  
+ /* Card container to ensure proper display */
+ .card-container {
     width: 71px; /* Width of a standard card image */
     height: 96px; /* Height of a standard card image */
     display: inline-block;
     margin: 5px;
     position: relative;
-}
-
-/* Card styling to ensure full image is shown */
-.card {
+ }
+  
+ /* Card styling to ensure full image is shown */
+ .card {
     width: 100%;
     height: 100%;
     background-size: cover;
     background-position: center;
     border: 1px solid #ddd; /* Optional border to define card edges */
     border-radius: 4px; /* Optional rounding of corners */
-}
-
-/* Placeholder for hidden cards */
-.card-container .card {
+ }
+  
+ /* Placeholder for hidden cards */
+ .card-container .card {
     background-image: url('https://via.placeholder.com/71x96'); /* Placeholder image */
-}
-
-/* Player and dealer information styling */
-.player-info, #dealer-info {
+ }
+  
+ /* Player and dealer information styling */
+ .player-info, #dealer-info {
     margin-bottom: 20px;
-}
-
-.player-hand {
+ }
+  
+ .player-hand {
     margin-top: 10px;
     display: flex;
     flex-wrap: wrap;
     gap: 10px; /* Space between cards */
-}
-
-/* Styling for player status, including stay/busted */
-.player-status {
+ }
+  
+ /* Styling for player status, including stay/busted */
+ .player-status {
     margin-top: 10px;
     font-weight: bold;
-}
-
-/* Specific colors for status messages */
-.stayed {
+ }
+  
+ /* Specific colors for status messages */
+ .stayed {
     color: #00ff00; /* Green color for stayed */
-}
-
-.busted {
+ }
+  
+ .busted {
     color: #ff0000; /* Red color for busted */
-}
-
-/* Betting table and player betting information */
-#betting-table {
+ }
+  
+ /* Betting table and player betting information */
+ #betting-table {
     margin-top: 20px;
-}
-
-.player-bet {
+ }
+  
+ .player-bet {
     margin-bottom: 10px;
-}
-
-/* Button styling */
-button {
+ }
+  
+ /* Button styling */
+ button {
     background-color: #fff;
     color: green;
     border: none;
@@ -84,18 +84,23 @@ button {
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-}
-
-button:hover {
+ }
+  
+ button:hover {
     background-color: #f0f0f0;
-}
-
-/* Game log styling */
-#game-log {
+ }
+  
+ /* Game log styling */
+ #game-log {
     margin-top: 20px;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 5px;
     background-color: #5a5252;
     color: green;
-}
+ }
+  
+  
+  
+  
+  
