@@ -44,6 +44,7 @@ function render() {
 
 /**
  * Creates and shuffles a new deck of cards.
+ * The deck is populated with standard 52 cards (4 suits, 13 values each).
  */
 function createDeck() {
     const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
@@ -59,17 +60,32 @@ function createDeck() {
 
 /**
  * Calculates the value of a card.
+ * King, Queen, and Jack are worth 10 points.
+ * Ace can be worth 1 or 11 points, depending on the player's choice.
  * @param {Object} card - The card object.
  * @returns {number} - The value of the card.
  */
 function getCardValue(card) {
     if (['J', 'Q', 'K'].includes(card.value)) return 10;
-    if (card.value === 'A') return 11;
+    if (card.value === 'A') return playerChoosesAceValue(); // Player chooses the value for Ace
     return parseInt(card.value, 10);
 }
 
 /**
+ * Prompts the player to choose the value of an Ace card.
+ * @returns {number} - The chosen value of the Ace (1 or 11).
+ */
+function playerChoosesAceValue() {
+    let aceValue;
+    do {
+        aceValue = parseInt(prompt("You've been dealt an Ace! Choose its value: 1 or 11", "11"), 10);
+    } while (![1, 11].includes(aceValue)); // Ensures valid input
+    return aceValue;
+}
+
+/**
  * Calculates the total value of a hand.
+ * The value adjusts for Aces if necessary to avoid busting.
  * @param {Array} hand - The array of card objects.
  * @returns {number} - The total value of the hand.
  */
@@ -85,6 +101,7 @@ function calculateHandValue(hand) {
 
 /**
  * Displays the hand of cards in the specified DOM element.
+ * Each card is displayed as a string combining its value and suit.
  * @param {Array} hand - The array of card objects.
  * @param {HTMLElement} element - The DOM element to display the hand in.
  */
@@ -94,6 +111,7 @@ function displayHand(hand, element) {
 
 /**
  * Updates the displayed balance.
+ * The player's current balance is shown in the DOM.
  */
 function updateBalance() {
     balanceElement.textContent = balance;
@@ -101,6 +119,7 @@ function updateBalance() {
 
 /**
  * Displays a message to the user.
+ * This is used to provide feedback on game progress and decisions.
  * @param {string} message - The message to display.
  */
 function displayMessage(message) {
@@ -109,6 +128,7 @@ function displayMessage(message) {
 
 /**
  * Sets the enabled/disabled state of buttons based on the current game state.
+ * Buttons are enabled only when relevant actions are available to the player.
  */
 function setButtonState() {
     if (gameState === 'waiting') {
@@ -136,6 +156,7 @@ function setButtonState() {
 
 /**
  * Starts a new game by resetting the hands and creating a new deck.
+ * The game transitions from 'waiting' to 'betting' state.
  */
 function startNewGame() {
     if (gameState !== 'waiting') {
@@ -153,6 +174,7 @@ function startNewGame() {
 
 /**
  * Deals the initial cards to the player and the dealer.
+ * Each is dealt two cards at the beginning of the game.
  */
 function dealInitialCards() {
     playerHand.push(deck.pop(), deck.pop());
@@ -161,6 +183,8 @@ function dealInitialCards() {
 
 /**
  * Handles the player's decision to hit.
+ * A new card is dealt to the player, and the hand is evaluated.
+ * If the player busts (hand value exceeds 21), they lose.
  */
 function hit() {
     if (gameState !== 'playing') {
@@ -180,6 +204,8 @@ function hit() {
 
 /**
  * Handles the player's decision to stand.
+ * The dealer then plays, drawing cards until their hand is worth at least 17.
+ * The outcome of the game is then determined.
  */
 function stand() {
     if (gameState !== 'playing') {
@@ -208,6 +234,7 @@ function stand() {
 
 /**
  * Handles the player's bet placement.
+ * The bet amount is validated, and the game moves to the 'playing' state.
  */
 function placeBet() {
     if (gameState !== 'betting') {
