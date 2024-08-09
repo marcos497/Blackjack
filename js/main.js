@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM elements from the first snippet
     const startButton = document.getElementById('start-button');
     const introPage = document.getElementById('intro-page');
     const submitPlayersButton = document.getElementById('submit-players');
@@ -12,21 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameTableDiv = document.getElementById('game-table');
     const gameLogDiv = document.getElementById('game-log');
 
-    // DOM elements from the second snippet
-    const numberOfPlayersInput = document.getElementById('numberOfPlayersInput');
-    const submitNumberOfPlayersButton = document.getElementById('submitNumberOfPlayers');
-    const playerNamesSection = document.getElementById('playerNamesSection');
-    const playerInputsContainer = document.getElementById('playerInputsContainer');
-    const submitPlayerNamesButton = document.getElementById('submitPlayerNames');
-    const activePlayersSection = document.getElementById('activePlayers');
-    const playersList = document.getElementById('playersList');
-
-    // Game variables
     let players = [];
     let dealer = { name: 'Dealer', balance: 20000, cards: [] }; // Dealer starts with $20,000
+    let deckId = '';
     let gameOver = false;
-    let numberOfPlayers = 0;
-    let playerNames = [];
 
     // Start button functionality
     startButton.addEventListener('click', () => {
@@ -34,57 +22,42 @@ document.addEventListener('DOMContentLoaded', () => {
         introPage.style.display = 'block';
     });
 
-    // Handle the number of players submission
-    submitNumberOfPlayersButton.addEventListener('click', () => {
-        numberOfPlayers = parseInt(numberOfPlayersInput.value, 10);
-        if (isNaN(numberOfPlayers) || numberOfPlayers < 1 || numberOfPlayers > 8) {
+    // Submit players functionality
+    submitPlayersButton.addEventListener('click', () => {
+        const numPlayers = parseInt(numPlayersInput.value);
+        if (numPlayers < 1 || numPlayers > 8) {
             alert('Please enter a number between 1 and 8.');
             return;
         }
 
-        // Hide number of players section and show player names section
-        document.getElementById('numberOfPlayersSection').style.display = 'none';
-        playerNamesSection.style.display = 'block';
+        players = [];
+        playerNamesDiv.innerHTML = '';
 
-        // Generate input fields for player names
-        playerInputsContainer.innerHTML = '';
-        for (let i = 0; i < numberOfPlayers; i++) {
+        for (let i = 1; i <= numPlayers; i++) {
             const input = document.createElement('input');
             input.type = 'text';
-            input.placeholder = `Player ${i + 1} name`;
-            input.id = `playerName${i + 1}`;
-            playerInputsContainer.appendChild(input);
+            input.id = `player-${i}`;
+            input.placeholder = `Player ${i} Name`;
+            playerNamesDiv.appendChild(input);
+            playerNamesDiv.appendChild(document.createElement('br'));
         }
-    });
 
-    // Handle the player names submission
-    submitPlayerNamesButton.addEventListener('click', () => {
-        playerNames = [];
-        for (let i = 0; i < numberOfPlayers; i++) {
-            const nameInput = document.getElementById(`playerName${i + 1}`);
-            const name = nameInput.value.trim();
-            if (name) {
-                playerNames.push({ name, balance: 1000, bet: 0, cards: [], hasStood: false });
-            } else {
-                alert('Please enter a name for all players.');
-                return;
+        const submitNamesButton = document.createElement('button');
+        submitNamesButton.textContent = 'Submit Names';
+        submitNamesButton.addEventListener('click', () => {
+            players = [];
+            for (let i = 1; i <= numPlayers; i++) {
+                const name = document.getElementById(`player-${i}`).value;
+                if (name) {
+                    players.push({ name, balance: 1000, bet: 0, cards: [], hasStood: false });
+                }
             }
-        }
-
-        // Display the list of active players
-        playerNamesSection.style.display = 'none';
-        activePlayersSection.style.display = 'block';
-
-        playersList.innerHTML = '';
-        playerNames.forEach(player => {
-            const playerDiv = document.createElement('div');
-            playerDiv.textContent = player.name;
-            playersList.appendChild(playerDiv);
+            introPage.style.display = 'none';
+            bettingPage.style.display = 'block';
+            showBettingTable();
         });
 
-        // Proceed to betting phase
-        bettingPage.style.display = 'block';
-        showBettingTable();
+        playerNamesDiv.appendChild(submitNamesButton);
     });
 
     // Show betting table functionality
@@ -131,7 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
         dealerDiv.innerHTML = `
             <h3>${dealer.name}</h3>
             <p>Balance: $${dealer.balance}</p>
-            <p>Cards: <span id="dealer-cards"></span></p>
+            <div id="dealer-cards" class="card-flip">
+                <!-- The card-flip-inner will be updated dynamically -->
+            </div>
         `;
         gameTableDiv.appendChild(dealerDiv);
 
@@ -170,152 +145,209 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Hit button functionality
+    // Fetch new deck of cards
+    function fetchNewDeck() {
+        return fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
+            .then(response => response.json())
+            .then(data => {
+                deckId = data.deck_id;
+            });
+    }
+
+    // Draw a card from the deck
+    function drawCard() {
+        return fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`)
+            .then(response => response.json())
+            .then(data => data.cards[0])
+            .catch(error => {
+                console.error('Error drawing card:', error);
+                return null;
+            });
+    }
+
+    // Update player card display with images
+    function updatePlayerCardDisplay(index) {
+        const player = players[index];
+        const cardImages = player.cards.map(card => `<img src="${card.image}" alt="${card.value} of ${card.suit}" class="card-image">`).join(' ');
+        document.getElementById(`player-cards-${index}`).innerHTML = cardImages;
+    }
+
+    // Update dealer card display with card-flipping effect
+    function updateDealerCardDisplay(isFlipping = false) {
+        const dealerCardsDiv = document.getElementById('dealer-cards');
+        dealerCardsDiv.innerHTML = ''; // Clear previous content
+
+        if (isFlipping) {
+            const frontCard = dealer.cards[0];
+            const backCard = dealer.cards[1] || { image: '', value: 'Hidden Card', suit: '' };
+
+            dealerCardsDiv.innerHTML = `
+                <div class="card-flip">
+                    <div class="card-flip-inner">
+                        <div class="card-flip-front">
+                            <img src="${frontCard.image}" alt="${frontCard.value} of ${frontCard.suit}" class="card-image">
+                        </div>
+                        <div class="card-flip-back">
+                            <p>${backCard.value} - ${backCard.suit}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            dealer.cards.forEach(card => {
+                dealerCardsDiv.innerHTML += `<img src="${card.image}" alt="${card.value} of ${card.suit}" class="card-image">`;
+            });
+        }
+    }
+
+    // Start the game
+    function startGame() {
+        gameLogDiv.textContent += 'Game started. Dealer is shuffling and dealing cards...\n';
+        fetchNewDeck().then(() => {
+            shuffleAndDeal();
+        });
+    }
+
+    // Shuffle and deal cards
+    function shuffleAndDeal() {
+        gameLogDiv.textContent += 'Dealer shuffles the deck.\n';
+        gameLogDiv.textContent += 'Dealer deals cards to each player.\n';
+        players.forEach((player, index) => {
+            drawCard().then(card1 => {
+                player.cards.push(card1);
+                return drawCard();
+            }).then(card2 => {
+                player.cards.push(card2);
+                updatePlayerCardDisplay(index);
+            });
+        });
+        drawCard().then(card1 => {
+            dealer.cards.push(card1);
+            document.getElementById('dealer-cards').innerHTML = `<div class="card-flip"><div class="card-flip-inner"><div class="card-flip-front"><img src="${card1.image}" alt="${card1.value} of ${card1.suit}" class="card-image"></div><div class="card-flip-back"><p>Hidden Card</p></div></div></div>`;
+        });
+    }
+
+    // Handle player's hit action
     function handleHit(event) {
         if (gameOver) return;
-
-        const index = parseInt(event.target.getAttribute('data-index'));
-        const player = players[index];
-
+        const playerIndex = parseInt(event.target.dataset.index);
+        const player = players[playerIndex];
         if (player.hasStood) {
-            alert(`${player.name} has already stayed.`);
+            alert('You have already stood.');
             return;
         }
+        drawCard().then(card => {
+            player.cards.push(card);
+            updatePlayerCardDisplay(playerIndex);
+            const handValue = calculateHandValue(player.cards);
+            document.getElementById(`player-status-${playerIndex}`).textContent = `Hand value: ${handValue}`;
 
-        const card = drawCard();
-        player.cards.push(card);
-        document.getElementById(`player-cards-${index}`).textContent = player.cards.join(', ');
-
-        if (calculateHandValue(player.cards) > 21) {
-            alert(`${player.name} has busted!`);
-            dealer.balance += player.bet;  // Player's bet goes to dealer
-            player.balance -= player.bet;  // Player loses their bet
-            player.bet = 0;  // Reset player's bet
-            player.hasStood = true;  // Player cannot hit after busting
-
-            // Display result for player
-            document.getElementById(`player-result-${index}`).textContent = `${player.name} busts!`;
-            document.getElementById(`player-status-${index}`).textContent = 'Busted!';
-
-            // Disable player controls
-            document.querySelector(`.hit[data-index="${index}"]`).disabled = true;
-            document.querySelector(`.stay[data-index="${index}"]`).disabled = true;
-
-            // Re-enable buttons for remaining players
-            updatePlayerControls();
-
-            checkAllPlayersStayed();
-        }
-    }
-
-    // Stay button functionality
-    function handleStay(event) {
-        const index = parseInt(event.target.getAttribute('data-index'));
-        const player = players[index];
-
-        if (player.hasStood) {
-            alert(`${player.name} has already stayed.`);
-            return;
-        }
-
-        player.hasStood = true;
-        document.querySelector(`.hit[data-index="${index}"]`).disabled = true;  // Disable Hit button
-        document.querySelector(`.stay[data-index="${index}"]`).disabled = true;  // Disable Stay button
-
-        document.getElementById(`player-status-${index}`).textContent = 'Stayed!';
-        updatePlayerControls();
-        checkAllPlayersStayed();
-    }
-
-    // Check if all players have stayed
-    function checkAllPlayersStayed() {
-        if (players.every(player => player.hasStood || calculateHandValue(player.cards) > 21)) {
-            dealerPlay();
-        }
-    }
-
-    // Dealer's play logic
-    function dealerPlay() {
-        // Dealer reveals hidden card
-        document.getElementById('dealer-cards').textContent = dealer.cards.join(', ');
-        // Dealer plays
-        while (calculateHandValue(dealer.cards) < 17) {
-            dealer.cards.push(drawCard());
-            document.getElementById('dealer-cards').textContent = dealer.cards.join(', ');
-        }
-
-        const dealerHandValue = calculateHandValue(dealer.cards);
-        let dealerBusted = dealerHandValue > 21;
-        if (dealerBusted) {
-            document.getElementById('dealer-info').innerHTML += ' Dealer busts!';
-            players.forEach(player => {
-                if (!player.hasStood && calculateHandValue(player.cards) <= 21) {
-                    player.balance += player.bet * 2;
-                } else {
-                    player.balance += player.bet;
-                }
-                player.bet = 0;
-                document.getElementById(`player-result-${players.indexOf(player)}`).textContent = `${player.name} wins!`;
-            });
-        } else {
-            // Dealer did not bust
-            players.forEach(player => {
-                if (!player.hasStood) {
-                    const playerHandValue = calculateHandValue(player.cards);
-                    if (playerHandValue > 21) {
-                        dealer.balance += player.bet;
-                    } else if (playerHandValue > dealerHandValue) {
-                        player.balance += player.bet * 2;
-                        document.getElementById(`player-result-${players.indexOf(player)}`).textContent = `${player.name} wins!`;
-                    } else if (playerHandValue < dealerHandValue) {
-                        dealer.balance += player.bet;
-                        document.getElementById(`player-result-${players.indexOf(player)}`).textContent = `${player.name} loses.`;
-                    } else {
-                        player.balance += player.bet;
-                        document.getElementById(`player-result-${players.indexOf(player)}`).textContent = `${player.name} ties.`;
-                    }
-                }
-                player.bet = 0;
-            });
-        }
-
-        gameOver = true;
-    }
-
-    // Draw a card from the deck (simplified example)
-    function drawCard() {
-        const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
-        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        const suit = suits[Math.floor(Math.random() * suits.length)];
-        const value = values[Math.floor(Math.random() * values.length)];
-        return `${value} of ${suit}`;
-    }
-
-    // Calculate hand value (simplified example)
-    function calculateHandValue(cards) {
-        const valueMap = {
-            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
-            'J': 10, 'Q': 10, 'K': 10, 'A': 11
-        };
-        let value = 0;
-        let numAces = 0;
-        cards.forEach(card => {
-            const cardValue = card.split(' ')[0];
-            value += valueMap[cardValue];
-            if (cardValue === 'A') numAces++;
+            if (handValue > 21) {
+                document.getElementById(`player-result-${playerIndex}`).textContent = 'Busted!';
+                player.hasStood = true;
+                checkAllPlayersFinished();
+            }
         });
-        while (value > 21 && numAces > 0) {
+    }
+
+    // Handle player's stay action
+    function handleStay(event) {
+        if (gameOver) return;
+        const playerIndex = parseInt(event.target.dataset.index);
+        const player = players[playerIndex];
+        player.hasStood = true;
+        document.getElementById(`player-status-${playerIndex}`).textContent = 'Stayed';
+        checkAllPlayersFinished();
+    }
+
+    // Check if all players have finished their turn
+    function checkAllPlayersFinished() {
+        if (players.every(player => player.hasStood || calculateHandValue(player.cards) > 21)) {
+            dealerTurn();
+        }
+    }
+
+    // Calculate hand value
+    function calculateHandValue(cards) {
+        let value = 0;
+        let hasAce = false;
+        cards.forEach(card => {
+            if (['JACK', 'QUEEN', 'KING'].includes(card.value)) {
+                value += 10;
+            } else if (card.value === 'ACE') {
+                value += 11;
+                hasAce = true;
+            } else {
+                value += parseInt(card.value);
+            }
+        });
+        while (value > 21 && hasAce) {
             value -= 10;
-            numAces--;
+            hasAce = false;
         }
         return value;
     }
 
-    // Update player controls based on game state
-    function updatePlayerControls() {
-        if (players.every(player => player.hasStood || calculateHandValue(player.cards) > 21)) {
-            document.querySelectorAll('.hit').forEach(button => button.disabled = true);
-            document.querySelectorAll('.stay').forEach(button => button.disabled = true);
-        }
+    // Dealer's turn logic including card flipping effect
+    function dealerTurn() {
+        gameLogDiv.textContent += 'Dealer reveals hidden card.\n';
+
+        // Initial card display with hidden card
+        updateDealerCardDisplay();
+
+        // Animate card flipping
+        setTimeout(() => {
+            updateDealerCardDisplay(true);
+        }, 1000); // Adjust the delay as needed
+
+        // Continue with the dealer's turn
+        setTimeout(() => {
+            let dealerValue = calculateHandValue(dealer.cards);
+            while (dealerValue < 17) {
+                drawCard().then(card => {
+                    dealer.cards.push(card);
+                    updateDealerCardDisplay();
+                    dealerValue = calculateHandValue(dealer.cards);
+                });
+            }
+
+            if (dealerValue === 21) {
+                gameOver = true;
+                gameLogDiv.textContent += 'Dealer has 21. Dealer wins!\n';
+                alert('Dealer wins with a blackjack! All bets are lost.');
+                endGame();
+            } else {
+                resolveWinners();
+            }
+        }, 2000); // Adjust the delay to ensure flipping effect is visible
+    }
+
+    // Resolve winners
+    function resolveWinners() {
+        const dealerValue = calculateHandValue(dealer.cards);
+        players.forEach(player => {
+            const playerValue = calculateHandValue(player.cards);
+            if (playerValue > 21) {
+                gameLogDiv.textContent += `${player.name} busts with ${playerValue}!\n`;
+            } else if (dealerValue > 21 || playerValue > dealerValue) {
+                gameLogDiv.textContent += `${player.name} wins with ${playerValue}!\n`;
+                player.balance += player.bet * 2; // Win bet amount
+            } else if (playerValue === dealerValue) {
+                gameLogDiv.textContent += `${player.name} ties with ${playerValue}!\n`;
+                player.balance += player.bet; // Return bet amount
+            } else {
+                gameLogDiv.textContent += `${player.name} loses with ${playerValue}.\n`;
+            }
+        });
+        endGame();
+    }
+
+    // End game
+    function endGame() {
+        gameOver = true;
+        document.getElementById('game-controls').innerHTML = '<button id="restart-game">Restart Game</button>';
+        document.getElementById('restart-game').addEventListener('click', () => {
+            location.reload();
+        });
     }
 });
