@@ -1,267 +1,320 @@
-/* Constants */
-const MAX_PLAYERS = 8;
-const STARTING_BALANCE = 35000;
-const MIN_BET = 300;
+document.addEventListener('DOMContentLoaded', () => {
+    const startButton = document.getElementById('start-button');
+    const introPage = document.getElementById('intro-page');
+    const submitPlayersButton = document.getElementById('submit-players');
+    const bettingPage = document.getElementById('betting-page');
+    const gamePage = document.getElementById('game-page');
+    const numPlayersInput = document.getElementById('num-players');
+    const playerNamesDiv = document.getElementById('player-names');
+    const bettingTableDiv = document.getElementById('betting-table');
+    const submitBetsButton = document.getElementById('submit-bets');
+    const gameTableDiv = document.getElementById('game-table');
+    const gameLogDiv = document.getElementById('game-log');
 
-/* State Variables */
-let numPlayers;
-let players = []; // Array to store player objects
-let dealer = { hand: [], score: 0 }; // Dealer's hand and score
-let currentPlayerIndex = 0;
+    let players = [];
+    let dealer = { name: 'Dealer', balance: 20000, cards: [] }; // Dealer starts with $20,000
+    let deckId = '';
+    let deckPromise = null;
+    let gameOver = false;
 
-/* Cached Elements */
-const playerForm = document.getElementById('player-form');
-const nameInputsDiv = document.getElementById('name-inputs');
-const gameBoard = document.getElementById('game-board');
-const playerInfoDiv = document.getElementById('player-info');
-const dealerCardsDiv = document.getElementById('dealer-cards');
-const stayBtn = document.getElementById('stay-btn');
-const hitBtn = document.getElementById('hit-btn');
-const resultMessage = document.getElementById('result-message');
-const restartBtn = document.getElementById('restart-btn');
-
-/* Event Listeners */
-playerForm.addEventListener('submit', handlePlayerFormSubmit);
-stayBtn.addEventListener('click', handleStay);
-hitBtn.addEventListener('click', handleHit);
-restartBtn.addEventListener('click', initialize);
-
-/* Functions */
-
-/* Initialize the game */
-function initialize() {
-    players = [];
-    dealer = { hand: [], score: 0 };
-    currentPlayerIndex = 0;
-    gameBoard.classList.add('hidden');
-    resultMessage.innerHTML = '';
-    restartBtn.classList.add('hidden');
-    showPlayerSetup();
-}
-
-/* Render the game state to the screen */
-function render() {
-    playerInfoDiv.innerHTML = '';
-    players.forEach((player, index) => {
-        const playerDiv = document.createElement('div');
-        playerDiv.innerHTML = `<h3>${player.name}</h3><p>Bet: $${player.bet}</p><p>Balance: $${player.balance}</p><div class="cards">${renderHand(player.hand)}</div><p>Score: ${player.score}</p>`;
-        playerInfoDiv.appendChild(playerDiv);
+    // Start button functionality
+    startButton.addEventListener('click', () => {
+        document.getElementById('landing-page').style.display = 'none';
+        introPage.style.display = 'block';
     });
 
-    dealerCardsDiv.innerHTML = renderHand(dealer.hand);
-    document.getElementById('dealer-score').textContent = `Score: ${dealer.score}`;
-}
+    // Submit players functionality
+    submitPlayersButton.addEventListener('click', () => {
+        const numPlayers = parseInt(numPlayersInput.value);
+        if (numPlayers < 1 || numPlayers > 8) {
+            alert('Please enter a number between 1 and 8.');
+            return;
+        }
 
-/* Handle the initial player form submission */
-function handlePlayerFormSubmit(event) {
-    event.preventDefault();
-    numPlayers = document.getElementById('num-players').value;
-    if (numPlayers < 1 || numPlayers > MAX_PLAYERS) {
-        alert(`Please enter a number of players between 1 and ${MAX_PLAYERS}.`);
-        return;
-    }
-    generateNameInputs(numPlayers);
-}
+        players = [];
+        playerNamesDiv.innerHTML = '';
 
-/* Generate input fields for player names */
-function generateNameInputs(num) {
-    nameInputsDiv.innerHTML = '';
-    for (let i = 0; i < num; i++) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = `Player ${i + 1} Name`;
-        input.required = true;
-        nameInputsDiv.appendChild(input);
-    }
-    const submitNamesBtn = document.createElement('button');
-    submitNamesBtn.textContent = 'Submit Names';
-    submitNamesBtn.addEventListener('click', handleNameSubmission);
-    nameInputsDiv.appendChild(submitNamesBtn);
-}
+        for (let i = 1; i <= numPlayers; i++) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `player-${i}`;
+            input.placeholder = `Player ${i} Name`;
+            playerNamesDiv.appendChild(input);
+            playerNamesDiv.appendChild(document.createElement('br'));
+        }
 
-/* Handle the submission of player names */
-function handleNameSubmission() {
-    const nameInputs = nameInputsDiv.getElementsByTagName('input');
-    for (let i = 0; i < nameInputs.length; i++) {
-        players.push({
-            name: nameInputs[i].value,
-            hand: [],
-            score: 0,
-            balance: STARTING_BALANCE,
-            bet: 0
+        const submitNamesButton = document.createElement('button');
+        submitNamesButton.textContent = 'Submit Names';
+        submitNamesButton.addEventListener('click', () => {
+            players = [];
+            for (let i = 1; i <= numPlayers; i++) {
+                const name = document.getElementById(`player-${i}`).value;
+                if (name) {
+                    players.push({ name, balance: 1000, bet: 0, cards: [], hasStood: false, hasBusted: false });
+                }
+            }
+            introPage.style.display = 'none';
+            bettingPage.style.display = 'block';
+            showBettingTable();
+        });
+
+        playerNamesDiv.appendChild(submitNamesButton);
+    });
+
+    // Show betting table functionality
+    function showBettingTable() {
+        bettingTableDiv.innerHTML = '';
+        players.forEach((player, index) => {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-bet';
+            playerDiv.innerHTML = `
+                <h3>${player.name}</h3>
+                <input type="number" id="bet-${index}" placeholder="Bet Amount" min="1" max="${player.balance}">
+                <span>Balance: ${player.balance}</span>
+            `;
+            bettingTableDiv.appendChild(playerDiv);
         });
     }
-    startBetting();
-}
 
-/* Start the betting phase */
-function startBetting() {
-    gameBoard.classList.remove('hidden');
-    render();
-    askForBet(currentPlayerIndex);
-}
+    // Submit bets functionality
+    submitBetsButton.addEventListener('click', () => {
+        let validBets = true;
+        players.forEach((player, index) => {
+            const betAmount = parseInt(document.getElementById(`bet-${index}`).value);
+            if (isNaN(betAmount) || betAmount <= 0 || betAmount > player.balance) {
+                alert(`Invalid bet amount for ${player.name}.`);
+                validBets = false;
+            } else {
+                player.bet = betAmount;
+                player.balance -= betAmount; // Deduct the bet amount from player's balance
+            }
+        });
 
-/* Ask the current player for a bet */
-function askForBet(playerIndex) {
-    const player = players[playerIndex];
-    const bet = prompt(`${player.name}, place your bet (min $${MIN_BET}):`);
-    if (bet < MIN_BET || bet > player.balance) {
-        alert(`Invalid bet. Please bet an amount between $${MIN_BET} and your balance ($${player.balance}).`);
-        askForBet(playerIndex);
-        return;
-    }
-    player.bet = parseInt(bet);
-    currentPlayerIndex++;
-    if (currentPlayerIndex < players.length) {
-        askForBet(currentPlayerIndex);
-    } else {
-        dealInitialCards();
-    }
-}
-
-/* Deal the initial two cards to each player and the dealer */
-function dealInitialCards() {
-    currentPlayerIndex = 0;
-    players.forEach(player => {
-        player.hand = [drawCard(), drawCard()];
-        player.score = calculateScore(player.hand);
-    });
-    dealer.hand = [drawCard(), drawCard()];
-    dealer.score = calculateScore(dealer.hand);
-    render();
-    checkInitialScores();
-}
-
-/* Check the initial scores and handle Blackjacks/Busts */
-function checkInitialScores() {
-    players.forEach((player, index) => {
-        if (player.score === 21) {
-            player.balance += player.bet * 1.5;
-            alert(`${player.name} hit Blackjack and won $${player.bet * 1.5}!`);
-            removePlayerFromGame(index);
-        } else if (player.score > 21) {
-            player.balance -= player.bet;
-            alert(`${player.name} busted and lost $${player.bet}.`);
-            removePlayerFromGame(index);
+        if (validBets) {
+            bettingPage.style.display = 'none';
+            gamePage.style.display = 'block';
+            startGame();
         }
     });
-    currentPlayerIndex = 0;
-    if (players.length > 0) {
-        promptPlayerAction();
-    } else {
-        dealerTurn();
+
+    // Start the game
+    function startGame() {
+        fetchNewDeck().then(() => {
+            players.forEach(player => player.cards = []);
+            dealer.cards = [];
+            gameOver = false;
+
+            // Deal initial cards
+            players.forEach(player => {
+                drawCard(player);
+                drawCard(player);
+            });
+
+            drawCard(dealer); // Deal one card to the dealer
+            drawCard(dealer); // Deal another card to the dealer
+
+            // Update UI after initial deal
+            updateUI();
+        });
     }
-}
 
-/* Remove a player from the game if they are out */
-function removePlayerFromGame(index) {
-    players.splice(index, 1);
-}
-
-/* Prompt the current player to hit or stay */
-function promptPlayerAction() {
-    const player = players[currentPlayerIndex];
-    alert(`${player.name}, it's your turn. Your current score is ${player.score}.`);
-    stayBtn.classList.remove('hidden');
-    hitBtn.classList.remove('hidden');
-}
-
-/* Handle the stay action */
-function handleStay() {
-    currentPlayerIndex++;
-    if (currentPlayerIndex < players.length) {
-        promptPlayerAction();
-    } else {
-        dealerTurn();
-    }
-}
-
-/* Handle the hit action */
-function handleHit() {
-    const player = players[currentPlayerIndex];
-    player.hand.push(drawCard());
-    player.score = calculateScore(player.hand);
-    render();
-    if (player.score > 21) {
-        player.balance -= player.bet;
-        alert(`${player.name} busted and lost $${player.bet}.`);
-        removePlayerFromGame(currentPlayerIndex);
-        if (players.length > 0) {
-            promptPlayerAction();
-        } else {
-            dealerTurn();
+    // Fetch a new deck of cards
+    function fetchNewDeck() {
+        if (!deckPromise) {
+            deckPromise = fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
+                .then(response => response.json())
+                .then(data => {
+                    deckId = data.deck_id;
+                    return deckId;
+                });
         }
-    } else {
-        promptPlayerAction();
+        return deckPromise;
     }
-}
 
-/* Dealer's turn */
-function dealerTurn() {
-    stayBtn.classList.add('hidden');
-    hitBtn.classList.add('hidden');
-    while (dealer.score < 17) {
-        dealer.hand.push(drawCard());
-        dealer.score = calculateScore(dealer.hand);
-        render();
+    // Draw a card from the deck
+    function drawCard(playerOrDealer) {
+        if (gameOver) return;
+
+        return fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`)
+            .then(response => response.json())
+            .then(data => {
+                const card = data.cards[0];
+                playerOrDealer.cards.push(card);
+                updateUI();
+            })
+            .catch(error => console.error('Error drawing card:', error));
     }
-    evaluateGame();
-}
 
-/* Evaluate the game results */
-function evaluateGame() {
-    players.forEach(player => {
-        if (player.score > dealer.score || dealer.score > 21) {
-            player.balance += player.bet * 1;
-            alert(`${player.name} won $${player.bet * 1}!`);
-        } else {
-            player.balance -= player.bet;
-            alert(`${player.name} lost $${player.bet}.`);
+    // Update UI with the latest game state
+    function updateUI() {
+        // Clear previous game state
+        gameTableDiv.innerHTML = '';
+        gameLogDiv.innerHTML = '';
+
+        // Display dealer's cards
+        const dealerDiv = document.createElement('div');
+        dealerDiv.id = 'dealer-info';
+        dealerDiv.innerHTML = `<h2>Dealer</h2>`;
+        const dealerCardsDiv = document.createElement('div');
+        dealerCardsDiv.id = 'dealer-cards';
+
+        // Show only the dealer's first card initially
+        dealer.cards.forEach((card, index) => {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card-container';
+            cardDiv.innerHTML = `
+                <div class="card" style="background-image: url('${index === 0 ? card.image : 'https://via.placeholder.com/71x96'}');"></div>
+            `;
+            dealerCardsDiv.appendChild(cardDiv);
+        });
+
+        dealerDiv.appendChild(dealerCardsDiv);
+        gameTableDiv.appendChild(dealerDiv);
+
+        // Display players' hands and controls
+        players.forEach((player, index) => {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-info';
+            playerDiv.innerHTML = `<h2>${player.name}</h2>`;
+            const playerCardsDiv = document.createElement('div');
+            playerCardsDiv.className = 'player-hand';
+            player.cards.forEach(card => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card-container';
+                cardDiv.innerHTML = `
+                    <div class="card" style="background-image: url('${card.image}');"></div>
+                `;
+                playerCardsDiv.appendChild(cardDiv);
+            });
+            playerDiv.appendChild(playerCardsDiv);
+
+            // Add Hit and Stay buttons for each player
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'player-controls';
+            const hitButton = document.createElement('button');
+            hitButton.textContent = 'Hit';
+            hitButton.addEventListener('click', () => handleHit(index));
+            const stayButton = document.createElement('button');
+            stayButton.textContent = 'Stay';
+            stayButton.addEventListener('click', () => handleStay(index));
+            controlsDiv.appendChild(hitButton);
+            controlsDiv.appendChild(stayButton);
+            playerDiv.appendChild(controlsDiv);
+
+            // Add status area
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'player-status';
+            statusDiv.id = `status-${index}`;
+            statusDiv.innerHTML = ''; // Initialize empty
+            playerDiv.appendChild(statusDiv);
+
+            gameTableDiv.appendChild(playerDiv);
+        });
+
+        // Display game log
+        gameLogDiv.innerHTML = `<p>Game State Updated</p>`;
+    }
+
+    // Handle Hit action for a player
+    function handleHit(playerIndex) {
+        if (gameOver || players[playerIndex].hasStood || players[playerIndex].hasBusted) return;
+
+        drawCard(players[playerIndex]).then(() => {
+            const score = calculateScore(players[playerIndex]);
+            if (score > 21) {
+                players[playerIndex].hasBusted = true;
+                document.getElementById(`status-${playerIndex}`).innerText = 'Busted!';
+                checkGameOver();
+            } else {
+                document.getElementById(`status-${playerIndex}`).innerText = '';
+            }
+        });
+    }
+
+    // Handle Stay action for a player
+    function handleStay(playerIndex) {
+        if (gameOver || players[playerIndex].hasStood || players[playerIndex].hasBusted) return;
+
+        players[playerIndex].hasStood = true;
+        document.getElementById(`status-${playerIndex}`).innerText = 'Stayed';
+        checkGameOver();
+    }
+
+    // Check if the game is over
+    function checkGameOver() {
+        if (players.every(player => player.hasStood || player.hasBusted) && dealer.cards.length >= 2) {
+            revealDealerSecondCard();
+            dealerPlay();
         }
-    });
-    showGameResult();
-}
-
-/* Show the final game result */
-function showGameResult() {
-    render();
-    restartBtn.classList.remove('hidden');
-}
-
-/* Draw a card from the deck */
-function drawCard() {
-    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-    const suit = suits[Math.floor(Math.random() * suits.length)];
-    const value = values[Math.floor(Math.random() * values.length)];
-    return { suit, value };
-}
-
-/* Calculate the score of a hand */
-function calculateScore(hand) {
-    let score = 0;
-    let aces = 0;
-    hand.forEach(card => {
-        if (['J', 'Q', 'K'].includes(card.value)) {
-            score += 10;
-        } else if (card.value === 'A') {
-            aces++;
-            score += 11;
-        } else {
-            score += parseInt(card.value);
-        }
-    });
-    while (score > 21 && aces > 0) {
-        score -= 10;
-        aces--;
     }
-    return score;
-}
 
-/* Render a player's or dealer's hand */
-function renderHand(hand) {
-    return hand.map(card => `<div class="card ${card.suit}.${card.value}"></div>`).join('');
-}
+    // Reveal the dealer's second card
+    function revealDealerSecondCard() {
+        const dealerCardsDiv = document.getElementById('dealer-cards');
+        dealerCardsDiv.querySelectorAll('.card-container')[1].querySelector('.card').style.backgroundImage = `url('${dealer.cards[1].image}')`;
+    }
 
-/* Start the game */
-initialize();
+    // Dealer's play logic
+    function dealerPlay() {
+        while (calculateScore(dealer) < 17) {
+            drawCard(dealer);
+        }
+
+        // Determine the winner and update the game state
+        determineWinners();
+    }
+
+    // Calculate the score of a hand
+    function calculateScore(player) {
+        let score = 0;
+        let aceCount = 0;
+
+        player.cards.forEach(card => {
+            let value = card.value;
+            if (value === 'KING' || value === 'QUEEN' || value === 'JACK') {
+                value = 10;
+            } else if (value === 'ACE') {
+                value = 11;
+                aceCount++;
+            } else {
+                value = parseInt(value);
+            }
+            score += value;
+        });
+
+        // Adjust score for Aces
+        while (score > 21 && aceCount > 0) {
+            score -= 10;
+            aceCount--;
+        }
+
+        return score;
+    }
+
+    // Determine the winners
+    function determineWinners() {
+        const dealerScore = calculateScore(dealer);
+        players.forEach(player => {
+            const playerScore = calculateScore(player);
+            if (playerScore > 21) {
+                gameLogDiv.innerHTML += `<p>${player.name} busts!</p>`;
+            } else if (dealerScore > 21 || playerScore > dealerScore) {
+                gameLogDiv.innerHTML += `<p>${player.name} wins!</p>`;
+                player.balance += player.bet * 2; // Win double the bet
+            } else if (playerScore < dealerScore) {
+                gameLogDiv.innerHTML += `<p>${player.name} loses.</p>`;
+            } else {
+                gameLogDiv.innerHTML += `<p>${player.name} pushes.</p>`;
+                player.balance += player.bet; // Return the bet amount
+            }
+        });
+
+        // Display dealer's final cards and score
+        gameLogDiv.innerHTML += `<p>Dealer's final hand: ${calculateScore(dealer)}</p>`;
+        dealer.cards.forEach(card => {
+            gameLogDiv.innerHTML += `<img src="${card.image}" alt="${card.value} of ${card.suit}">`;
+        });
+
+        gameOver = true;
+    }
+});
