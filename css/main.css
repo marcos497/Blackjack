@@ -63,19 +63,6 @@ button:hover {
     width: 200px;
 }
 
-/* Player names section */
-#playerNames {
-    margin-bottom: 20px;
-}
-
-#playerNames div {
-    margin-bottom: 10px;
-}
-
-#playerNames label {
-    margin-right: 10px;
-}
-
 /* Game area styles */
 .game-area {
     display: flex;
@@ -186,13 +173,4 @@ button:hover {
 
 .results p {
     font-size: 1.2rem;
-}
-
-/* New styles for dynamic elements */
-#betting-phase {
-    display: none;
-}
-
-#game {
-    display: none;
 }
