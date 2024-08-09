@@ -1,353 +1,267 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const startButton = document.getElementById('start-button');
-    const introPage = document.getElementById('intro-page');
-    const submitPlayersButton = document.getElementById('submit-players');
-    const bettingPage = document.getElementById('betting-page');
-    const gamePage = document.getElementById('game-page');
-    const numPlayersInput = document.getElementById('num-players');
-    const playerNamesDiv = document.getElementById('player-names');
-    const bettingTableDiv = document.getElementById('betting-table');
-    const submitBetsButton = document.getElementById('submit-bets');
-    const gameTableDiv = document.getElementById('game-table');
-    const gameLogDiv = document.getElementById('game-log');
+/* Constants */
+const MAX_PLAYERS = 8;
+const STARTING_BALANCE = 35000;
+const MIN_BET = 300;
 
-    let players = [];
-    let dealer = { name: 'Dealer', balance: 20000, cards: [] }; // Dealer starts with $20,000
-    let deckId = '';
-    let gameOver = false;
+/* State Variables */
+let numPlayers;
+let players = []; // Array to store player objects
+let dealer = { hand: [], score: 0 }; // Dealer's hand and score
+let currentPlayerIndex = 0;
 
-    // Start button functionality
-    startButton.addEventListener('click', () => {
-        document.getElementById('landing-page').style.display = 'none';
-        introPage.style.display = 'block';
+/* Cached Elements */
+const playerForm = document.getElementById('player-form');
+const nameInputsDiv = document.getElementById('name-inputs');
+const gameBoard = document.getElementById('game-board');
+const playerInfoDiv = document.getElementById('player-info');
+const dealerCardsDiv = document.getElementById('dealer-cards');
+const stayBtn = document.getElementById('stay-btn');
+const hitBtn = document.getElementById('hit-btn');
+const resultMessage = document.getElementById('result-message');
+const restartBtn = document.getElementById('restart-btn');
+
+/* Event Listeners */
+playerForm.addEventListener('submit', handlePlayerFormSubmit);
+stayBtn.addEventListener('click', handleStay);
+hitBtn.addEventListener('click', handleHit);
+restartBtn.addEventListener('click', initialize);
+
+/* Functions */
+
+/* Initialize the game */
+function initialize() {
+    players = [];
+    dealer = { hand: [], score: 0 };
+    currentPlayerIndex = 0;
+    gameBoard.classList.add('hidden');
+    resultMessage.innerHTML = '';
+    restartBtn.classList.add('hidden');
+    showPlayerSetup();
+}
+
+/* Render the game state to the screen */
+function render() {
+    playerInfoDiv.innerHTML = '';
+    players.forEach((player, index) => {
+        const playerDiv = document.createElement('div');
+        playerDiv.innerHTML = `<h3>${player.name}</h3><p>Bet: $${player.bet}</p><p>Balance: $${player.balance}</p><div class="cards">${renderHand(player.hand)}</div><p>Score: ${player.score}</p>`;
+        playerInfoDiv.appendChild(playerDiv);
     });
 
-    // Submit players functionality
-    submitPlayersButton.addEventListener('click', () => {
-        const numPlayers = parseInt(numPlayersInput.value);
-        if (numPlayers < 1 || numPlayers > 8) {
-            alert('Please enter a number between 1 and 8.');
-            return;
-        }
+    dealerCardsDiv.innerHTML = renderHand(dealer.hand);
+    document.getElementById('dealer-score').textContent = `Score: ${dealer.score}`;
+}
 
-        players = [];
-        playerNamesDiv.innerHTML = '';
+/* Handle the initial player form submission */
+function handlePlayerFormSubmit(event) {
+    event.preventDefault();
+    numPlayers = document.getElementById('num-players').value;
+    if (numPlayers < 1 || numPlayers > MAX_PLAYERS) {
+        alert(`Please enter a number of players between 1 and ${MAX_PLAYERS}.`);
+        return;
+    }
+    generateNameInputs(numPlayers);
+}
 
-        for (let i = 1; i <= numPlayers; i++) {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.id = `player-${i}`;
-            input.placeholder = `Player ${i} Name`;
-            playerNamesDiv.appendChild(input);
-            playerNamesDiv.appendChild(document.createElement('br'));
-        }
+/* Generate input fields for player names */
+function generateNameInputs(num) {
+    nameInputsDiv.innerHTML = '';
+    for (let i = 0; i < num; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Player ${i + 1} Name`;
+        input.required = true;
+        nameInputsDiv.appendChild(input);
+    }
+    const submitNamesBtn = document.createElement('button');
+    submitNamesBtn.textContent = 'Submit Names';
+    submitNamesBtn.addEventListener('click', handleNameSubmission);
+    nameInputsDiv.appendChild(submitNamesBtn);
+}
 
-        const submitNamesButton = document.createElement('button');
-        submitNamesButton.textContent = 'Submit Names';
-        submitNamesButton.addEventListener('click', () => {
-            players = [];
-            for (let i = 1; i <= numPlayers; i++) {
-                const name = document.getElementById(`player-${i}`).value;
-                if (name) {
-                    players.push({ name, balance: 1000, bet: 0, cards: [], hasStood: false });
-                }
-            }
-            introPage.style.display = 'none';
-            bettingPage.style.display = 'block';
-            showBettingTable();
+/* Handle the submission of player names */
+function handleNameSubmission() {
+    const nameInputs = nameInputsDiv.getElementsByTagName('input');
+    for (let i = 0; i < nameInputs.length; i++) {
+        players.push({
+            name: nameInputs[i].value,
+            hand: [],
+            score: 0,
+            balance: STARTING_BALANCE,
+            bet: 0
         });
+    }
+    startBetting();
+}
 
-        playerNamesDiv.appendChild(submitNamesButton);
+/* Start the betting phase */
+function startBetting() {
+    gameBoard.classList.remove('hidden');
+    render();
+    askForBet(currentPlayerIndex);
+}
+
+/* Ask the current player for a bet */
+function askForBet(playerIndex) {
+    const player = players[playerIndex];
+    const bet = prompt(`${player.name}, place your bet (min $${MIN_BET}):`);
+    if (bet < MIN_BET || bet > player.balance) {
+        alert(`Invalid bet. Please bet an amount between $${MIN_BET} and your balance ($${player.balance}).`);
+        askForBet(playerIndex);
+        return;
+    }
+    player.bet = parseInt(bet);
+    currentPlayerIndex++;
+    if (currentPlayerIndex < players.length) {
+        askForBet(currentPlayerIndex);
+    } else {
+        dealInitialCards();
+    }
+}
+
+/* Deal the initial two cards to each player and the dealer */
+function dealInitialCards() {
+    currentPlayerIndex = 0;
+    players.forEach(player => {
+        player.hand = [drawCard(), drawCard()];
+        player.score = calculateScore(player.hand);
     });
+    dealer.hand = [drawCard(), drawCard()];
+    dealer.score = calculateScore(dealer.hand);
+    render();
+    checkInitialScores();
+}
 
-    // Show betting table functionality
-    function showBettingTable() {
-        bettingTableDiv.innerHTML = '';
-        players.forEach((player, index) => {
-            const playerDiv = document.createElement('div');
-            playerDiv.className = 'player-bet';
-            playerDiv.innerHTML = `
-                <p>${player.name} - Balance: $${player.balance}</p>
-                <input type="number" id="bet-${index}" placeholder="Enter bet amount" min="1" max="10000">
-            `;
-            bettingTableDiv.appendChild(playerDiv);
-        });
-    }
-
-    // Submit bets functionality
-    submitBetsButton.addEventListener('click', () => {
-        let validBets = true;
-        players.forEach((player, index) => {
-            const betAmount = parseInt(document.getElementById(`bet-${index}`).value);
-            if (isNaN(betAmount) || betAmount <= 0 || betAmount > player.balance) {
-                alert(`Invalid bet amount for ${player.name}.`);
-                validBets = false;
-                return;
-            }
-            player.bet = betAmount;
-        });
-
-        if (validBets) {
-            bettingPage.style.display = 'none';
-            gamePage.style.display = 'block';
-            showGameTable();
-            startGame();
+/* Check the initial scores and handle Blackjacks/Busts */
+function checkInitialScores() {
+    players.forEach((player, index) => {
+        if (player.score === 21) {
+            player.balance += player.bet * 1.5;
+            alert(`${player.name} hit Blackjack and won $${player.bet * 1.5}!`);
+            removePlayerFromGame(index);
+        } else if (player.score > 21) {
+            player.balance -= player.bet;
+            alert(`${player.name} busted and lost $${player.bet}.`);
+            removePlayerFromGame(index);
         }
     });
-
-    // Show game table functionality
-    function showGameTable() {
-        gameTableDiv.innerHTML = '';
-        const dealerDiv = document.createElement('div');
-        dealerDiv.id = 'dealer-info';
-        dealerDiv.className = 'player-info';
-        dealerDiv.innerHTML = `
-            <h3>${dealer.name}</h3>
-            <p>Balance: $${dealer.balance}</p>
-            <div id="dealer-cards" class="card-flip">
-                <!-- The card-flip-inner will be updated dynamically -->
-            </div>
-        `;
-        gameTableDiv.appendChild(dealerDiv);
-
-        players.forEach((player, index) => {
-            const playerDiv = document.createElement('div');
-            playerDiv.className = 'player-info';
-            playerDiv.id = `player-info-${index}`;
-            playerDiv.innerHTML = `
-                <h3>${player.name}</h3>
-                <p>Balance: $${player.balance}</p>
-                <p>Bet: $${player.bet}</p>
-                <p>Cards: <span id="player-cards-${index}"></span></p>
-                <p id="player-status-${index}"></p> <!-- Status paragraph -->
-                <div class="player-controls">
-                    <button class="hit" data-index="${index}">Hit</button>
-                    <button class="stay" data-index="${index}">Stay</button>
-                </div>
-                <p id="player-result-${index}"></p> <!-- Result paragraph -->
-            `;
-            gameTableDiv.appendChild(playerDiv);
-        });
-
-        // Show game controls
-        gameTableDiv.innerHTML += `
-            <div id="game-controls">
-                <!-- No End Turn button -->
-            </div>
-        `;
-
-        // Add event listeners for buttons
-        document.querySelectorAll('.hit').forEach(button => {
-            button.addEventListener('click', handleHit);
-        });
-        document.querySelectorAll('.stay').forEach(button => {
-            button.addEventListener('click', handleStay);
-        });
+    currentPlayerIndex = 0;
+    if (players.length > 0) {
+        promptPlayerAction();
+    } else {
+        dealerTurn();
     }
+}
 
-    // Fetch new deck of cards
-    function fetchNewDeck() {
-        return fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
-            .then(response => response.json())
-            .then(data => {
-                deckId = data.deck_id;
-            });
+/* Remove a player from the game if they are out */
+function removePlayerFromGame(index) {
+    players.splice(index, 1);
+}
+
+/* Prompt the current player to hit or stay */
+function promptPlayerAction() {
+    const player = players[currentPlayerIndex];
+    alert(`${player.name}, it's your turn. Your current score is ${player.score}.`);
+    stayBtn.classList.remove('hidden');
+    hitBtn.classList.remove('hidden');
+}
+
+/* Handle the stay action */
+function handleStay() {
+    currentPlayerIndex++;
+    if (currentPlayerIndex < players.length) {
+        promptPlayerAction();
+    } else {
+        dealerTurn();
     }
+}
 
-    // Draw a card from the deck
-    function drawCard() {
-        return fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`)
-            .then(response => response.json())
-            .then(data => data.cards[0])
-            .catch(error => {
-                console.error('Error drawing card:', error);
-                return null;
-            });
-    }
-
-    // Update player card display with images
-    function updatePlayerCardDisplay(index) {
-        const player = players[index];
-        const cardImages = player.cards.map(card => `<img src="${card.image}" alt="${card.value} of ${card.suit}" class="card-image">`).join(' ');
-        document.getElementById(`player-cards-${index}`).innerHTML = cardImages;
-    }
-
-    // Update dealer card display with card-flipping effect
-    function updateDealerCardDisplay(isFlipping = false) {
-        const dealerCardsDiv = document.getElementById('dealer-cards');
-        dealerCardsDiv.innerHTML = ''; // Clear previous content
-
-        if (isFlipping) {
-            const frontCard = dealer.cards[0];
-            const backCard = dealer.cards[1] || { image: '', value: 'Hidden Card', suit: '' };
-
-            dealerCardsDiv.innerHTML = `
-                <div class="card-flip">
-                    <div class="card-flip-inner">
-                        <div class="card-flip-front">
-                            <img src="${frontCard.image}" alt="${frontCard.value} of ${frontCard.suit}" class="card-image">
-                        </div>
-                        <div class="card-flip-back">
-                            <p>${backCard.value} - ${backCard.suit}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
+/* Handle the hit action */
+function handleHit() {
+    const player = players[currentPlayerIndex];
+    player.hand.push(drawCard());
+    player.score = calculateScore(player.hand);
+    render();
+    if (player.score > 21) {
+        player.balance -= player.bet;
+        alert(`${player.name} busted and lost $${player.bet}.`);
+        removePlayerFromGame(currentPlayerIndex);
+        if (players.length > 0) {
+            promptPlayerAction();
         } else {
-            dealer.cards.forEach(card => {
-                dealerCardsDiv.innerHTML += `<img src="${card.image}" alt="${card.value} of ${card.suit}" class="card-image">`;
-            });
-        }
-    }
-
-    // Start the game
-    function startGame() {
-        gameLogDiv.textContent += 'Game started. Dealer is shuffling and dealing cards...\n';
-        fetchNewDeck().then(() => {
-            shuffleAndDeal();
-        });
-    }
-
-    // Shuffle and deal cards
-    function shuffleAndDeal() {
-        gameLogDiv.textContent += 'Dealer shuffles the deck.\n';
-        gameLogDiv.textContent += 'Dealer deals cards to each player.\n';
-        players.forEach((player, index) => {
-            drawCard().then(card1 => {
-                player.cards.push(card1);
-                return drawCard();
-            }).then(card2 => {
-                player.cards.push(card2);
-                updatePlayerCardDisplay(index);
-            });
-        });
-        drawCard().then(card1 => {
-            dealer.cards.push(card1);
-            document.getElementById('dealer-cards').innerHTML = `<div class="card-flip"><div class="card-flip-inner"><div class="card-flip-front"><img src="${card1.image}" alt="${card1.value} of ${card1.suit}" class="card-image"></div><div class="card-flip-back"><p>Hidden Card</p></div></div></div>`;
-        });
-    }
-
-    // Handle player's hit action
-    function handleHit(event) {
-        if (gameOver) return;
-        const playerIndex = parseInt(event.target.dataset.index);
-        const player = players[playerIndex];
-        if (player.hasStood) {
-            alert('You have already stood.');
-            return;
-        }
-        drawCard().then(card => {
-            player.cards.push(card);
-            updatePlayerCardDisplay(playerIndex);
-            const handValue = calculateHandValue(player.cards);
-            document.getElementById(`player-status-${playerIndex}`).textContent = `Hand value: ${handValue}`;
-
-            if (handValue > 21) {
-                document.getElementById(`player-result-${playerIndex}`).textContent = 'Busted!';
-                player.hasStood = true;
-                checkAllPlayersFinished();
-            }
-        });
-    }
-
-    // Handle player's stay action
-    function handleStay(event) {
-        if (gameOver) return;
-        const playerIndex = parseInt(event.target.dataset.index);
-        const player = players[playerIndex];
-        player.hasStood = true;
-        document.getElementById(`player-status-${playerIndex}`).textContent = 'Stayed';
-        checkAllPlayersFinished();
-    }
-
-    // Check if all players have finished their turn
-    function checkAllPlayersFinished() {
-        if (players.every(player => player.hasStood || calculateHandValue(player.cards) > 21)) {
             dealerTurn();
         }
+    } else {
+        promptPlayerAction();
     }
+}
 
-    // Calculate hand value
-    function calculateHandValue(cards) {
-        let value = 0;
-        let hasAce = false;
-        cards.forEach(card => {
-            if (['JACK', 'QUEEN', 'KING'].includes(card.value)) {
-                value += 10;
-            } else if (card.value === 'ACE') {
-                value += 11;
-                hasAce = true;
-            } else {
-                value += parseInt(card.value);
-            }
-        });
-        while (value > 21 && hasAce) {
-            value -= 10;
-            hasAce = false;
+/* Dealer's turn */
+function dealerTurn() {
+    stayBtn.classList.add('hidden');
+    hitBtn.classList.add('hidden');
+    while (dealer.score < 17) {
+        dealer.hand.push(drawCard());
+        dealer.score = calculateScore(dealer.hand);
+        render();
+    }
+    evaluateGame();
+}
+
+/* Evaluate the game results */
+function evaluateGame() {
+    players.forEach(player => {
+        if (player.score > dealer.score || dealer.score > 21) {
+            player.balance += player.bet * 1;
+            alert(`${player.name} won $${player.bet * 1}!`);
+        } else {
+            player.balance -= player.bet;
+            alert(`${player.name} lost $${player.bet}.`);
         }
-        return value;
+    });
+    showGameResult();
+}
+
+/* Show the final game result */
+function showGameResult() {
+    render();
+    restartBtn.classList.remove('hidden');
+}
+
+/* Draw a card from the deck */
+function drawCard() {
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    const suit = suits[Math.floor(Math.random() * suits.length)];
+    const value = values[Math.floor(Math.random() * values.length)];
+    return { suit, value };
+}
+
+/* Calculate the score of a hand */
+function calculateScore(hand) {
+    let score = 0;
+    let aces = 0;
+    hand.forEach(card => {
+        if (['J', 'Q', 'K'].includes(card.value)) {
+            score += 10;
+        } else if (card.value === 'A') {
+            aces++;
+            score += 11;
+        } else {
+            score += parseInt(card.value);
+        }
+    });
+    while (score > 21 && aces > 0) {
+        score -= 10;
+        aces--;
     }
+    return score;
+}
 
-    // Dealer's turn logic including card flipping effect
-    function dealerTurn() {
-        gameLogDiv.textContent += 'Dealer reveals hidden card.\n';
+/* Render a player's or dealer's hand */
+function renderHand(hand) {
+    return hand.map(card => `<div class="card ${card.suit}.${card.value}"></div>`).join('');
+}
 
-        // Initial card display with hidden card
-        updateDealerCardDisplay();
-
-        // Animate card flipping
-        setTimeout(() => {
-            updateDealerCardDisplay(true);
-        }, 1000); // Adjust the delay as needed
-
-        // Continue with the dealer's turn
-        setTimeout(() => {
-            let dealerValue = calculateHandValue(dealer.cards);
-            while (dealerValue < 17) {
-                drawCard().then(card => {
-                    dealer.cards.push(card);
-                    updateDealerCardDisplay();
-                    dealerValue = calculateHandValue(dealer.cards);
-                });
-            }
-
-            if (dealerValue === 21) {
-                gameOver = true;
-                gameLogDiv.textContent += 'Dealer has 21. Dealer wins!\n';
-                alert('Dealer wins with a blackjack! All bets are lost.');
-                endGame();
-            } else {
-                resolveWinners();
-            }
-        }, 2000); // Adjust the delay to ensure flipping effect is visible
-    }
-
-    // Resolve winners
-    function resolveWinners() {
-        const dealerValue = calculateHandValue(dealer.cards);
-        players.forEach(player => {
-            const playerValue = calculateHandValue(player.cards);
-            if (playerValue > 21) {
-                gameLogDiv.textContent += `${player.name} busts with ${playerValue}!\n`;
-            } else if (dealerValue > 21 || playerValue > dealerValue) {
-                gameLogDiv.textContent += `${player.name} wins with ${playerValue}!\n`;
-                player.balance += player.bet * 2; // Win bet amount
-            } else if (playerValue === dealerValue) {
-                gameLogDiv.textContent += `${player.name} ties with ${playerValue}!\n`;
-                player.balance += player.bet; // Return bet amount
-            } else {
-                gameLogDiv.textContent += `${player.name} loses with ${playerValue}.\n`;
-            }
-        });
-        endGame();
-    }
-
-    // End game
-    function endGame() {
-        gameOver = true;
-        document.getElementById('game-controls').innerHTML = '<button id="restart-game">Restart Game</button>';
-        document.getElementById('restart-game').addEventListener('click', () => {
-            location.reload();
-        });
-    }
-});
+/* Start the game */
+initialize();
