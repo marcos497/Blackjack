@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 let balance = 25000; // Starting balance
 let deck = [];
+let originalDeck = [];
 let players = [];
 let dealerHand = [];
 let gameState = 'waiting'; // Possible states: 'waiting', 'betting', 'playing', 'finished'
@@ -21,6 +22,9 @@ const gameSection = document.getElementById('game-section');
 const startGameButton = document.getElementById('start-game-button');
 const numPlayersInput = document.getElementById('num-players');
 const playerNamesDiv = document.getElementById('player-names');
+
+const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
 function init() {
     startGameButton.addEventListener('click', startGameSetup);
@@ -70,7 +74,8 @@ function startNewGame() {
     }
 
     dealerHand = [];
-    createDeck();
+    originalDeck = buildOriginalDeck(); // Build the original deck
+    deck = getNewShuffledDeck(); // Get a new shuffled deck
     dealInitialCards();
     displayMessage('Game started. Place your bets.');
     gameState = 'betting';
@@ -81,23 +86,59 @@ function startNewGame() {
 
 function render() {
     playerHandElement.innerHTML = players.map(player => `
-        <div>${player.name}'s hand: ${player.hand.map(card => `${card.value} of ${card.suit}`).join(', ')}</div>
+        <div>${player.name}'s hand: ${player.hand.map(card => getCardHTML(card)).join(', ')}</div>
     `).join('<br>');
-    displayHand(dealerHand, dealerHandElement);
+    dealerHandElement.innerHTML = dealerHand.map(card => getCardHTML(card)).join(', ');
     updateBalance();
     setButtonState();
 }
 
-function createDeck() {
-    const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
-    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-    deck = [];
-    for (const suit of suits) {
-        for (const value of values) {
-            deck.push({ suit, value });
-        }
+function getCardHTML(card) {
+    const cardClass = `card ${card.face}`;
+    return `<div class="${cardClass}"></div>`;
+}
+
+function renderDeckInContainer(deck, container) {
+    container.innerHTML = '';
+    let cardsHtml = '';
+    deck.forEach(card => {
+        cardsHtml += `<div class="card ${card.face}"></div>`;
+    });
+    container.innerHTML = cardsHtml;
+}
+
+function buildOriginalDeck() {
+    const deck = [];
+    suits.forEach(suit => {
+        ranks.forEach(rank => {
+            deck.push({
+                face: `${suit}-${rank}`,
+                value: Number(rank) || (rank === 'A' ? 11 : 10)
+            });
+        });
+    });
+    return deck;
+}
+
+function getNewShuffledDeck() {
+    const tempDeck = [...originalDeck];
+    const newShuffledDeck = [];
+    while (tempDeck.length) {
+        const rndIdx = Math.floor(Math.random() * tempDeck.length);
+        newShuffledDeck.push(tempDeck.splice(rndIdx, 1)[0]);
     }
-    deck = deck.sort(() => Math.random() - 0.5);
+    return newShuffledDeck;
+}
+
+function createDeck() {
+    deck = getNewShuffledDeck(); // Shuffle the deck when creating
+}
+
+function dealInitialCards() {
+    players.forEach(player => {
+        player.hand = [deck.pop(), deck.pop()];
+    });
+    dealerHand = [deck.pop(), deck.pop()];
 }
 
 function getCardValue(card) {
@@ -122,10 +163,6 @@ function calculateHandValue(hand) {
         aces--;
     }
     return value;
-}
-
-function displayHand(hand, element) {
-    element.innerHTML = hand.map(card => `${card.value} of ${card.suit}`).join('<br>');
 }
 
 function updateBalance() {
@@ -168,13 +205,6 @@ function setButtonState() {
     }
 }
 
-function dealInitialCards() {
-    players.forEach(player => {
-        player.hand = [deck.pop(), deck.pop()];
-    });
-    dealerHand = [deck.pop(), deck.pop()];
-}
-
 function hit() {
     if (gameState !== 'playing') {
         displayMessage('You can only hit during the playing state.');
@@ -188,14 +218,9 @@ function hit() {
         player.status = 'busted';
         balance -= player.bet;
         endRound();
-    } else if (playerValue === 21) {
-        displayMessage('Blackjack! You win.');
-        balance += player.bet * 1.5;
-        endRound();
     } else {
-        displayMessage(`Your hand value is ${playerValue}.`);
+        render();
     }
-    render();
 }
 
 function stand() {
@@ -203,48 +228,45 @@ function stand() {
         displayMessage('You can only stand during the playing state.');
         return;
     }
-    endRound();
-}
-
-function endRound() {
-    if (players.some(player => player.status === 'active')) {
-        dealerPlay();
-    } else {
-        displayMessage('Game over. No active players.');
-        gameState = 'finished';
-    }
+    // Dealer's turn
+    dealerPlay();
+    evaluateGame();
     render();
 }
 
 function dealerPlay() {
-    let dealerValue = calculateHandValue(dealerHand);
-    while (dealerValue < 17) {
+    while (calculateHandValue(dealerHand) < 17) {
         dealerHand.push(deck.pop());
-        dealerValue = calculateHandValue(dealerHand);
     }
-    displayMessage(`Dealer's hand value is ${dealerValue}.`);
+}
+
+function evaluateGame() {
+    const dealerValue = calculateHandValue(dealerHand);
     players.forEach(player => {
-        if (player.status === 'active') {
+        if (player.status === 'busted') {
+            displayMessage(`${player.name} busts and loses their bet.`);
+        } else {
             const playerValue = calculateHandValue(player.hand);
-            if (dealerValue > 21) {
-                displayMessage(`${player.name} wins!`);
-                balance += player.bet;
-            } else if (playerValue > dealerValue) {
+            if (dealerValue > 21 || playerValue > dealerValue) {
                 displayMessage(`${player.name} wins!`);
                 balance += player.bet;
             } else if (playerValue < dealerValue) {
                 displayMessage(`${player.name} loses.`);
                 balance -= player.bet;
             } else {
-                displayMessage(`${player.name} ties.`);
+                displayMessage(`${player.name} ties with the dealer.`);
             }
         }
     });
-    updateBalance();
     gameState = 'finished';
+    setButtonState();
 }
 
 function placeBet() {
+    if (gameState !== 'betting') {
+        displayMessage('You can only place bets during the betting state.');
+        return;
+    }
     const betAmount = parseInt(betAmountElement.value, 10);
     if (isNaN(betAmount) || betAmount <= 0 || betAmount > balance) {
         displayMessage('Invalid bet amount.');
@@ -256,13 +278,13 @@ function placeBet() {
 }
 
 function restartGame() {
-    balance = 25000;
-    players = [];
-    dealerHand = [];
-    deck = [];
     gameState = 'waiting';
     setupSection.style.display = 'block';
     gameSection.style.display = 'none';
-    updateBalance();
+}
+
+function endRound() {
+    gameState = 'finished';
     setButtonState();
+    render();
 }
