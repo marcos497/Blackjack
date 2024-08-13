@@ -1,44 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Blackjack Game</title>
-   
-   <!-- Link to the main CSS file -->
-   <!-- Assuming the CSS file is located in a folder named 'css' -->
-   <link rel="stylesheet" href="css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Game</title>
+    <link rel="stylesheet" href="main.css">
 </head>
 <body>
-   <!-- Landing page -->
-   <div id="landing-page">
-       <h1>Welcome to Blackjack</h1>
-       <button id="start-button">Start Game</button>
-   </div>
- 
-   <!-- Intro page -->
-   <div id="intro-page" style="display: none;">
-       <h2>Enter Number of Players</h2>
-       <input type="number" id="num-players" min="1" max="8" placeholder="Number of players">
-       <button id="submit-players">Submit</button>
-       <div id="player-names"></div>
-   </div>
- 
-   <!-- Betting page -->
-   <div id="betting-page" style="display: none;">
-       <h2>Place Your Bets</h2>
-       <div id="betting-table"></div>
-       <button id="submit-bets">Submit Bets</button>
-   </div>
- 
-   <!-- Game page -->
-   <div id="game-page" style="display: none;">
-       <div id="game-table"></div>
-       <div id="game-log"></div>
-   </div>
- 
-   <!-- Link to the main JavaScript file -->
-   <!-- Assuming the JavaScript file is in the same directory as this HTML file -->
-   <script src="./js/main.js"></script>
+    <div id="landing-page">
+        <h1>Welcome to Blackjack!</h1>
+        <button id="start-button">Start Game</button>
+    </div>
+
+    <div id="intro-page" style="display: none;">
+        <h2>Enter Number of Players</h2>
+        <input type="number" id="num-players" placeholder="Number of Players (1-3)" min="1" max="3">
+        <button id="submit-players">Submit</button>
+        <div id="player-names"></div>
+    </div>
+
+    <div id="betting-page" style="display: none;">
+        <h2>Place Your Bets</h2>
+        <div id="betting-table"></div>
+        <button id="submit-bets">Submit Bets</button>
+    </div>
+
+    <div id="game-page" style="display: none;">
+        <h2>Game in Progress</h2>
+        <div id="game-table"></div>
+        <div id="game-log"></div>
+    </div>
+
+    <script src="main.js"></script>
 </body>
 </html>
