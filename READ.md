@@ -35,7 +35,9 @@ CSS
 
 ## External Resources 
 
-https://deckofcardsapi.com/api/deck/
+Chat Gpt 
+
+
 
 
 
