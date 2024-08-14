@@ -1,55 +1,44 @@
-/* Reset some default styles */
 body {
    font-family: Arial, sans-serif;
-   margin: 0;
-   padding: 0;
-   box-sizing: border-box;
-}
-
-/* Landing Page */
-#landing-page {
    text-align: center;
-   padding: 20px;
 }
 
-/* Intro Page */
-#intro-page {
-   text-align: center;
-   padding: 20px;
-}
-
-/* Betting Page */
-#betting-page {
-   text-align: center;
-   padding: 20px;
-}
-
-/* Game Page */
+#landing-page,
+#intro-page,
+#betting-page,
 #game-page {
-   text-align: center;
-   padding: 20px;
-}
-
-/* Player and dealer styles */
-.player-info, #dealer-info {
    margin: 20px;
 }
 
-.player-hand, #dealer-cards {
-   display: flex;
-   flex-wrap: wrap;
-   justify-content: center;
+button {
+   padding: 10px 20px;
+   font-size: 16px;
 }
 
-.card-container {
-   margin: 5px;
+input {
+   padding: 5px;
+   font-size: 16px;
+}
+
+.player-info,
+.player-bet {
+   margin: 10px 0;
+}
+
+.player-hand {
+   display: flex;
+   justify-content: center;
+   margin: 10px 0;
 }
 
 .card {
    box-sizing: border-box;
    display: inline-block;
-   width: 71px;
-   height: 96px;
+   margin: 5px;
+   cursor: pointer;
+   font-size: inherit;
+   width: 4.0em;
+   height: 5.5em;
    background-color: #fff;
    border-radius: 0.20em;
    border: 1px solid #c3c3c3;
@@ -60,7 +49,6 @@ body {
    white-space: nowrap;
    overflow: hidden;
 }
-
 .card.small { font-size: 12px; }
 .card.large { font-size: 26px; }
 .card.xlarge { font-size: 42px; }
@@ -71,26 +59,5 @@ body {
    background-color: rgba(195, 195, 195, 0.5);
    border: 0.15em dashed #daa520;
 }
-/* Add your specific card styles here */
 .card.diamonds.A { background-image: url("../images/diamonds/diamonds-A.svg"); }
-/* ... (rest of your card styles) ... */
-
-/* Button and input styles */
-button {
-   padding: 10px 20px;
-   font-size: 16px;
-   margin: 10px;
-   cursor: pointer;
-}
-
-input[type="number"], input[type="text"] {
-   padding: 5px;
-   font-size: 16px;
-   margin: 10px;
-}
-
-.player-bet, .player-info {
-   border: 1px solid #ccc;
-   padding: 10px;
-   margin: 10px;
-}
+/* Add more card styles as needed */
