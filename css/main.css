@@ -1,34 +1,13 @@
 body {
    font-family: Arial, sans-serif;
+}
+
+#landing-page, #intro-page, #betting-page, #game-page {
    text-align: center;
 }
 
-#landing-page,
-#intro-page,
-#betting-page,
-#game-page {
-   margin: 20px;
-}
-
-button {
-   padding: 10px 20px;
-   font-size: 16px;
-}
-
-input {
-   padding: 5px;
-   font-size: 16px;
-}
-
-.player-info,
-.player-bet {
-   margin: 10px 0;
-}
-
-.player-hand {
-   display: flex;
-   justify-content: center;
-   margin: 10px 0;
+.player-info, .player-bet {
+   margin-bottom: 20px;
 }
 
 .card {
@@ -36,28 +15,16 @@ input {
    display: inline-block;
    margin: 5px;
    cursor: pointer;
-   font-size: inherit;
-   width: 4.0em;
-   height: 5.5em;
+   width: 60px;
+   height: 90px;
    background-color: #fff;
-   border-radius: 0.20em;
+   border-radius: 0.2em;
    border: 1px solid #c3c3c3;
    background-repeat: no-repeat;
    background-position: center center;
    background-size: contain;
-   text-indent: 100%;
-   white-space: nowrap;
-   overflow: hidden;
 }
-.card.small { font-size: 12px; }
-.card.large { font-size: 26px; }
-.card.xlarge { font-size: 42px; }
-.card.no-border { border: 0; }
-.card.shadow { box-shadow: 2px 2px 3px 0 rgba(41, 41, 41, 0.75); }
-.card.outline {
-   background-image: none;
-   background-color: rgba(195, 195, 195, 0.5);
-   border: 0.15em dashed #daa520;
+
+.card.back {
+   background-color: #000;
 }
-.card.diamonds.A { background-image: url("../images/diamonds/diamonds-A.svg"); }
-/* Add more card styles as needed */

@@ -4,32 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blackjack Game</title>
-    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
     <div id="landing-page">
         <button id="start-button">Start Game</button>
     </div>
-
-    <div id="intro-page" style="display: none;">
+    <div id="intro-page" style="display:none;">
         <h2>Enter Number of Players</h2>
-        <input type="number" id="num-players" min="1" max="3" placeholder="Number of Players">
+        <input type="number" id="num-players" min="1" max="3">
         <button id="submit-players">Submit</button>
         <div id="player-names"></div>
     </div>
-
-    <div id="betting-page" style="display: none;">
+    <div id="betting-page" style="display:none;">
         <h2>Place Your Bets</h2>
         <div id="betting-table"></div>
         <button id="submit-bets">Submit Bets</button>
     </div>
-
-    <div id="game-page" style="display: none;">
-        <h2>Blackjack Game</h2>
+    <div id="game-page" style="display:none;">
+        <h2>Game</h2>
         <div id="game-table"></div>
         <div id="game-log"></div>
     </div>
-
-    <script src="main.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
