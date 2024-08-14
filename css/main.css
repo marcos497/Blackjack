@@ -1,63 +1,96 @@
+/* Reset some default styles */
 body {
    font-family: Arial, sans-serif;
+   margin: 0;
+   padding: 0;
+   box-sizing: border-box;
+}
+
+/* Landing Page */
+#landing-page {
    text-align: center;
-   background-color: #008000;
-   color: #fff;
+   padding: 20px;
 }
 
-h1, h2 {
-   margin: 20px 0;
+/* Intro Page */
+#intro-page {
+   text-align: center;
+   padding: 20px;
 }
 
-button {
-   padding: 10px 20px;
-   font-size: 16px;
-   margin-top: 10px;
-   cursor: pointer;
-   background-color: #f0ad4e;
-   border: none;
-   border-radius: 5px;
-   color: #fff;
+/* Betting Page */
+#betting-page {
+   text-align: center;
+   padding: 20px;
 }
 
-button:hover {
-   background-color: #ec971f;
+/* Game Page */
+#game-page {
+   text-align: center;
+   padding: 20px;
 }
 
-input[type="number"],
-input[type="text"] {
-   padding: 10px;
-   font-size: 16px;
-   margin: 10px 0;
-   border: 1px solid #ccc;
-   border-radius: 5px;
-   width: 50%;
-}
-
-#game-table {
-   margin-top: 20px;
-}
-
+/* Player and dealer styles */
 .player-info, #dealer-info {
-   display: inline-block;
-   margin: 0 15px;
-   text-align: left;
+   margin: 20px;
+}
+
+.player-hand, #dealer-cards {
+   display: flex;
+   flex-wrap: wrap;
+   justify-content: center;
 }
 
 .card-container {
+   margin: 5px;
+}
+
+.card {
+   box-sizing: border-box;
    display: inline-block;
    width: 71px;
    height: 96px;
-   background-size: contain;
+   background-color: #fff;
+   border-radius: 0.20em;
+   border: 1px solid #c3c3c3;
    background-repeat: no-repeat;
-   margin: 5px;
+   background-position: center center;
+   background-size: contain;
+   text-indent: 100%;
+   white-space: nowrap;
+   overflow: hidden;
 }
 
-#game-log {
-   margin-top: 20px;
-   font-size: 18px;
+.card.small { font-size: 12px; }
+.card.large { font-size: 26px; }
+.card.xlarge { font-size: 42px; }
+.card.no-border { border: 0; }
+.card.shadow { box-shadow: 2px 2px 3px 0 rgba(41, 41, 41, 0.75); }
+.card.outline {
+   background-image: none;
+   background-color: rgba(195, 195, 195, 0.5);
+   border: 0.15em dashed #daa520;
+}
+/* Add your specific card styles here */
+.card.diamonds.A { background-image: url("../images/diamonds/diamonds-A.svg"); }
+/* ... (rest of your card styles) ... */
+
+/* Button and input styles */
+button {
+   padding: 10px 20px;
+   font-size: 16px;
+   margin: 10px;
+   cursor: pointer;
 }
 
-.player-controls button {
-   margin: 5px;
+input[type="number"], input[type="text"] {
+   padding: 5px;
+   font-size: 16px;
+   margin: 10px;
+}
+
+.player-bet, .player-info {
+   border: 1px solid #ccc;
+   padding: 10px;
+   margin: 10px;
 }
