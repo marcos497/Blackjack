@@ -13,8 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let players = [];
     let dealer = { name: 'Dealer', balance: 20000, cards: [] }; // Dealer starts with $20,000
-    let deckId = '';
-    let deckPromise = null;
+    let deck = [];
     let gameOver = false;
 
     // Start button functionality
@@ -23,9 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         introPage.style.display = 'block';
     });
 
-
-
-    //dealer face up card 
+    // Update the UI
     function updateUI() {
         gameTableDiv.innerHTML = '';
         players.forEach(player => {
@@ -33,33 +30,33 @@ document.addEventListener('DOMContentLoaded', () => {
             playerDiv.className = 'player-info';
             playerDiv.innerHTML = `
                 <h3>${player.name}</h3>
-                <div class="player-hand">${player.cards.map(card => `<div class="card ${card.suit} ${card.value}"></div>`).join('')}</div>
+                <div class="player-hand">${player.cards.map(card => `<div class="card ${card.suit} ${card.value}" style="background-image: url('${card.image}');"></div>`).join('')}</div>
                 <div>Balance: ${player.balance}</div>
                 <div>Bet: ${player.bet}</div>
             `;
             gameTableDiv.appendChild(playerDiv);
         });
-    
+
         const dealerDiv = document.createElement('div');
         dealerDiv.id = 'dealer-info';
         dealerDiv.innerHTML = `
             <h3>Dealer</h3>
             <div id="dealer-cards" class="player-hand">
                 <div class="card back"></div> <!-- Face down card -->
-                ${dealer.cards.slice(1).map(card => `<div class="card ${card.suit} ${card.value}"></div>`).join('')}
+                ${dealer.cards.slice(1).map(card => `<div class="card ${card.suit} ${card.value}" style="background-image: url('${card.image}');"></div>`).join('')}
             </div>
         `;
         gameTableDiv.appendChild(dealerDiv);
-    
+
         gameLogDiv.innerHTML = '';
     }
-    
+
     // When dealer starts their turn, reveal the first card
     function revealDealerCard() {
         const dealerFirstCard = dealer.cards[0];
-        document.querySelector('#dealer-cards .card.back').className = `card ${dealerFirstCard.suit} ${dealerFirstCard.value}`;
+        document.querySelector('#dealer-cards .card.back').style.backgroundImage = `url('${dealerFirstCard.image}')`;
     }
-    
+
     // Submit players functionality
     submitPlayersButton.addEventListener('click', () => {
         const numPlayers = parseInt(numPlayersInput.value);
@@ -143,12 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start the game
     function startGame() {
-        fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
-            .then(response => response.json())
-            .then(data => {
-                deckId = data.deck_id;
-                deckPromise = drawInitialCards();
-            });
+        fetchDeck().then(fetchedDeck => {
+            deck = fetchedDeck;
+            drawInitialCards();
+        });
     }
 
     function drawInitialCards() {
@@ -158,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawPromises.push(drawCard(dealer));
         drawPromises.push(drawCard(dealer));
 
-        return Promise.all(drawPromises)
+        Promise.all(drawPromises)
             .then(() => {
                 players.forEach(player => {
                     player.cards.push(player.cards.pop());
@@ -170,39 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Draw a card from the deck
     function drawCard(playerOrDealer) {
-        return fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`)
-            .then(response => response.json())
-            .then(data => {
-                const card = data.cards[0];
-                playerOrDealer.cards.push(card);
-                return card;
-            });
-    }
-
-    // Update the UI with the current game state
-    function updateUI() {
-        gameTableDiv.innerHTML = '';
-        players.forEach(player => {
-            const playerDiv = document.createElement('div');
-            playerDiv.className = 'player-info';
-            playerDiv.innerHTML = `
-                <h3>${player.name}</h3>
-                <div class="player-hand">${player.cards.map(card => `<div class="card ${card.suit} ${card.value}"></div>`).join('')}</div>
-                <div>Balance: ${player.balance}</div>
-                <div>Bet: ${player.bet}</div>
-            `;
-            gameTableDiv.appendChild(playerDiv);
-        });
-
-        const dealerDiv = document.createElement('div');
-        dealerDiv.id = 'dealer-info';
-        dealerDiv.innerHTML = `
-            <h3>Dealer</h3>
-            <div id="dealer-cards" class="player-hand">${dealer.cards.map(card => `<div class="card ${card.suit} ${card.value}"></div>`).join('')}</div>
-        `;
-        gameTableDiv.appendChild(dealerDiv);
-
-        gameLogDiv.innerHTML = '';
+        const card = deck.pop();
+        playerOrDealer.cards.push(card);
+        return card;
     }
 
     // Calculate hand value
@@ -229,3 +194,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return value;
     }
 });
+
+// Function to fetch deck from the card API
+async function fetchDeck() {
+    try {
+        const response = await fetch('http://localhost:3000/deck');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        return data.cards;
+    } catch (error) {
+        console.error('Error fetching deck:', error);
+        return [];
+    }
+}
