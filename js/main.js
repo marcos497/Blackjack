@@ -23,6 +23,43 @@ document.addEventListener('DOMContentLoaded', () => {
         introPage.style.display = 'block';
     });
 
+
+
+    //dealer face up card 
+    function updateUI() {
+        gameTableDiv.innerHTML = '';
+        players.forEach(player => {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-info';
+            playerDiv.innerHTML = `
+                <h3>${player.name}</h3>
+                <div class="player-hand">${player.cards.map(card => `<div class="card ${card.suit} ${card.value}"></div>`).join('')}</div>
+                <div>Balance: ${player.balance}</div>
+                <div>Bet: ${player.bet}</div>
+            `;
+            gameTableDiv.appendChild(playerDiv);
+        });
+    
+        const dealerDiv = document.createElement('div');
+        dealerDiv.id = 'dealer-info';
+        dealerDiv.innerHTML = `
+            <h3>Dealer</h3>
+            <div id="dealer-cards" class="player-hand">
+                <div class="card back"></div> <!-- Face down card -->
+                ${dealer.cards.slice(1).map(card => `<div class="card ${card.suit} ${card.value}"></div>`).join('')}
+            </div>
+        `;
+        gameTableDiv.appendChild(dealerDiv);
+    
+        gameLogDiv.innerHTML = '';
+    }
+    
+    // When dealer starts their turn, reveal the first card
+    function revealDealerCard() {
+        const dealerFirstCard = dealer.cards[0];
+        document.querySelector('#dealer-cards .card.back').className = `card ${dealerFirstCard.suit} ${dealerFirstCard.value}`;
+    }
+    
     // Submit players functionality
     submitPlayersButton.addEventListener('click', () => {
         const numPlayers = parseInt(numPlayersInput.value);
