@@ -5,18 +5,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitPlayersButton = document.getElementById('submit-players');
     const bettingPage = document.getElementById('betting-page');
     const gamePage = document.getElementById('game-page');
+    const actionButtonsDiv = document.getElementById('action-buttons');
+    const hitButton = document.createElement('button');
+    const standButton = document.createElement('button');
+    const restartButton = document.getElementById('restart-button');
     const numPlayersInput = document.getElementById('num-players');
     const playerNamesDiv = document.getElementById('player-names');
     const bettingTableDiv = document.getElementById('betting-table');
     const submitBetsButton = document.getElementById('submit-bets');
     const gameTableDiv = document.getElementById('game-table');
     const gameLogDiv = document.getElementById('game-log');
-    const validationMessageDiv = document.getElementById('validation-message'); // Add this line
+    const validationMessageDiv = document.getElementById('validation-message');
 
     let players = [];
     let dealer = { name: 'Dealer', balance: 20000, cards: [] }; // Dealer starts with $20,000
     let deckId = '';
     let gameOver = false;
+    let currentPlayerIndex = 0;
 
     // Function to display validation messages
     function displayValidationMessage(message) {
@@ -30,53 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
         validationMessageDiv.innerHTML = ''; // Clear validation messages
     });
 
-    // Update the UI to display cards for players and the dealer
-    function updateUI() {
-        gameTableDiv.innerHTML = ''; // Clear the game table for updates
-        players.forEach(player => {
-            const playerDiv = document.createElement('div');
-            playerDiv.className = 'player-info';
-            playerDiv.innerHTML = `
-                <h3>${player.name}</h3>
-                <div class="player-hand">${player.cards.map(card => `<div class="card ${card.suit.toLowerCase()} ${card.value.toLowerCase()}"></div>`).join('')}</div>
-                <div>Balance: ${player.balance}</div>
-                <div>Bet: ${player.bet}</div>
-            `;
-            gameTableDiv.appendChild(playerDiv);
-        });
-
-        // Update the dealer's UI with one face-down card
-        const dealerDiv = document.createElement('div');
-        dealerDiv.id = 'dealer-info';
-        dealerDiv.innerHTML = `
-            <h3>Dealer</h3>
-            <div id="dealer-cards" class="player-hand">
-                <div class="card back"></div> <!-- Face-down card -->
-                ${dealer.cards.slice(1).map(card => `<div class="card ${card.suit.toLowerCase()} ${card.value.toLowerCase()}"></div>`).join('')}
-            </div>
-        `;
-        gameTableDiv.appendChild(dealerDiv);
-
-        gameLogDiv.innerHTML = ''; // Clear the game log for new updates
-    }
-
-    // Reveal the dealer's face-down card when it's the dealer's turn
-    function revealDealerCard() {
-        const dealerFirstCard = dealer.cards[0];
-        const faceDownCard = document.querySelector('#dealer-cards .card.back');
-        
-        if (faceDownCard) {
-            faceDownCard.className = `card ${dealerFirstCard.suit.toLowerCase()} ${dealerFirstCard.value.toLowerCase()}`;
-        } else {
-            displayValidationMessage('Error drawing cards: Face-down card element not found.'); // Use the validation function
-        }
-    }
-
     // Submit player names and start the betting phase
     submitPlayersButton.addEventListener('click', () => {
         const numPlayers = parseInt(numPlayersInput.value);
         if (isNaN(numPlayers) || numPlayers < 1 || numPlayers > 2) { // Limit to 1 or 2 players
-            displayValidationMessage('Please enter a number between 1 and 2.'); // Use the validation function
+            displayValidationMessage('Please enter a number between 1 and 2.');
             return;
         }
 
@@ -110,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 } else {
                     allNamesEntered = false;
-                    displayValidationMessage(`Please enter a name for Player ${i}.`); // Use the validation function
+                    displayValidationMessage(`Please enter a name for Player ${i}.`);
                     break;
                 }
             }
@@ -157,9 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Handle input events for bet validation
-    bettingTableDiv.addEventListener('input', () => {
-        validateBets(); // Validate bets on input change
-    });
+    bettingTableDiv.addEventListener('input', validateBets);
 
     // Submit bets and start the game
     submitBetsButton.addEventListener('click', () => {
@@ -167,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         players.forEach((player, index) => {
             const betAmount = parseInt(document.getElementById(`bet-${index}`).value);
             if (isNaN(betAmount) || betAmount <= 0 || betAmount > player.balance) {
-                displayValidationMessage(`Invalid bet amount for ${player.name}. Please enter a valid bet.`); // Use the validation function
+                displayValidationMessage(`Invalid bet amount for ${player.name}. Please enter a valid bet.`);
                 validBets = false;
             } else {
                 player.bet = betAmount;
@@ -188,68 +149,229 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.json())
             .then(data => {
                 deckId = data.deck_id; // Store the deck ID for future API calls
-                drawInitialCards(); // Draw the initial cards
+                drawInitialCards();
             })
             .catch(error => {
-                displayValidationMessage(`Error starting the game: ${error.message}`); // Use the validation function
+                displayValidationMessage(`Error fetching deck: ${error.message}`);
             });
     }
 
-    // Draw the initial cards for all players and the dealer
+    // Draw initial cards for players and dealer
     function drawInitialCards() {
-        const drawPromises = []; // Array to hold the promises for drawing cards
-
         players.forEach(player => {
-            drawPromises.push(drawCardForPlayer(player)); // Push each player's draw promise into the array
+            drawCardForPlayer(player);
+            drawCardForPlayer(player);
+        });
+        drawCardForDealer(true); // Dealer's first card face-down
+        drawCardForDealer(false); // Dealer's second card face-up
+    }
+
+    // Function to draw cards for a player
+    function drawCardForPlayer(player, isHit = false) {
+        fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`)
+            .then(response => response.json())
+            .then(data => {
+                player.cards.push(data.cards[0]);
+                if (isHit) {
+                    updateUI(); // Update the UI after each hit
+                    if (calculateHandValue(player.cards) > 21) {
+                        player.hasBusted = true;
+                        displayValidationMessage(`${player.name} has busted!`);
+                        currentPlayerIndex++;
+                        if (currentPlayerIndex >= players.length) {
+                            dealerTurn();
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                displayValidationMessage(`Error drawing cards for ${player.name}: ${error.message}`);
+            });
+    }
+
+    // Function to draw cards for the dealer
+    function drawCardForDealer(faceDown = false) {
+        fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`)
+            .then(response => response.json())
+            .then(data => {
+                dealer.cards.push(data.cards[0]);
+                updateUI();
+            })
+            .catch(error => {
+                displayValidationMessage(`Error drawing cards for the dealer: ${error.message}`);
+            });
+    }
+
+    // Function to reveal the dealer's hidden card
+    function revealDealerCard() {
+        dealer.cards[0].image = ''; // Change this to fetch the actual card image
+        updateUI();
+    }
+
+    // Function to update the game UI based on current game state
+    function updateUI() {
+        gameTableDiv.innerHTML = '';
+        players.forEach((player, index) => {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-hand';
+            playerDiv.innerHTML = `
+                <h3>${player.name}</h3>
+                <div class="cards">
+                    ${player.cards.map(card => `<img src="${card.image}" alt="${card.code}" class="card">`).join('')}
+                </div>
+                <p>Hand Value: ${calculateHandValue(player.cards)}</p>
+                <p>Balance: ${player.balance}</p>
+            `;
+
+            // Add Hit and Stand buttons for each player
+            const playerActions = document.createElement('div');
+            playerActions.className = 'player-actions';
+            
+            hitButton.textContent = 'Hit';
+            hitButton.id = 'hit-button';
+            hitButton.className = 'action-button';
+            hitButton.addEventListener('click', () => {
+                if (!gameOver && !player.hasBusted && !player.hasStood) {
+                    drawCardForPlayer(player, true);
+                }
+            });
+
+            standButton.textContent = 'Stand';
+            standButton.id = 'stand-button';
+            standButton.className = 'action-button';
+            standButton.addEventListener('click', () => {
+                if (!gameOver && !player.hasBusted && !player.hasStood) {
+                    player.hasStood = true;
+                    currentPlayerIndex++;
+                    if (currentPlayerIndex >= players.length) {
+                        dealerTurn();
+                    }
+                    updateActionButtons();
+                }
+            });
+
+            playerActions.appendChild(hitButton);
+            playerActions.appendChild(standButton);
+            playerDiv.appendChild(playerActions);
+
+            gameTableDiv.appendChild(playerDiv);
         });
 
-        drawPromises.push(drawCardForDealer()); // Push the dealer's draw promise into the array
+        // Update dealer's hand
+        const dealerDiv = document.createElement('div');
+        dealerDiv.className = 'dealer-hand';
+        dealerDiv.innerHTML = `
+            <h3>${dealer.name}</h3>
+            <div class="cards">
+                ${dealer.cards.map(card => `<img src="${card.image}" alt="${card.code}" class="card">`).join('')}
+            </div>
+            <p>Hand Value: ${calculateHandValue(dealer.cards)}</p>
+        `;
+        gameTableDiv.appendChild(dealerDiv);
 
-        // Wait for all card draws to complete
-        Promise.all(drawPromises)
-            .then(() => {
-                // Update the UI with the drawn cards
-                updateUI();
-                revealDealerCard(); // Reveal the dealer's face-down card
-            })
-            .catch(error => {
-                displayValidationMessage(`Error drawing cards: ${error.message}`); // Use the validation function
-            });
+        updateActionButtons();
     }
 
-    // Draw a card for a specific player
-    function drawCardForPlayer(player) {
-        return fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=2`)
-            .then(response => response.json())
-            .then(data => {
-                player.cards = data.cards;
-            })
-            .catch(error => {
-                displayValidationMessage(`Error drawing cards for ${player.name}: ${error.message}`); // Use the validation function
-            });
+    // Function to calculate the total value of a hand
+    function calculateHandValue(cards) {
+        let value = 0;
+        let aceCount = 0;
+        cards.forEach(card => {
+            if (['KING', 'QUEEN', 'JACK'].includes(card.value)) {
+                value += 10;
+            } else if (card.value === 'ACE') {
+                aceCount++;
+                value += 11;
+            } else {
+                value += parseInt(card.value);
+            }
+        });
+
+        while (value > 21 && aceCount > 0) {
+            value -= 10;
+            aceCount--;
+        }
+
+        return value;
     }
 
-    // Draw a card for the dealer
-    function drawCardForDealer() {
-        return fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=2`)
-            .then(response => response.json())
-            .then(data => {
-                dealer.cards = data.cards;
-            })
-            .catch(error => {
-                displayValidationMessage(`Error drawing cards for the dealer: ${error.message}`); // Use the validation function
-            });
+    // Function to update the visibility and functionality of action buttons
+    function updateActionButtons() {
+        if (players.length > 0) {
+            const currentPlayer = players[currentPlayerIndex];
+            if (currentPlayer.hasBusted || currentPlayer.hasStood) {
+                hitButton.disabled = true;
+                standButton.disabled = true;
+            } else {
+                hitButton.disabled = false;
+                standButton.disabled = false;
+            }
+        } else {
+            hitButton.disabled = true;
+            standButton.disabled = true;
+        }
+
+        if (gameOver) {
+            hitButton.disabled = true;
+            standButton.disabled = true;
+            restartButton.disabled = false;
+        }
     }
 
-    // Handle the end of the game, check for win/loss conditions, etc.
-    function endGame() {
-        // Implement game-ending logic and display the results
+    // Handle player actions (hit and stand)
+    hitButton.addEventListener('click', () => {
+        if (!gameOver) {
+            const currentPlayer = players[currentPlayerIndex];
+            drawCardForPlayer(currentPlayer, true);
+        }
+    });
+
+    standButton.addEventListener('click', () => {
+        if (!gameOver) {
+            const currentPlayer = players[currentPlayerIndex];
+            currentPlayer.hasStood = true;
+            currentPlayerIndex++;
+            if (currentPlayerIndex >= players.length) {
+                dealerTurn();
+            }
+            updateActionButtons();
+        }
+    });
+
+    // Function to handle the dealer's turn
+    function dealerTurn() {
+        revealDealerCard();
+        while (calculateHandValue(dealer.cards) < 17) {
+            drawCardForDealer();
+        }
+        evaluateGameResults();
+        gameOver = true;
+        updateUI();
     }
+
+    // Function to evaluate game results and determine winners
+    function evaluateGameResults() {
+        const dealerValue = calculateHandValue(dealer.cards);
+        players.forEach(player => {
+            if (player.hasBusted) {
+                gameLogDiv.innerHTML += `<p>${player.name} lost their bet.</p>`;
+            } else if (dealerValue > 21 || calculateHandValue(player.cards) > dealerValue) {
+                gameLogDiv.innerHTML += `<p>${player.name} won their bet!</p>`;
+                player.balance += player.bet * 2; // Win double the bet amount
+            } else if (calculateHandValue(player.cards) < dealerValue) {
+                gameLogDiv.innerHTML += `<p>${player.name} lost their bet.</p>`;
+            } else {
+                gameLogDiv.innerHTML += `<p>${player.name} tied with the dealer.</p>`;
+                player.balance += player.bet; // Return the bet amount
+            }
+        });
+    }
+
+    // Restart the game
+    restartButton.addEventListener('click', () => {
+        window.location.reload();
+    });
+
+    // Update action buttons visibility and functionality on page load
+    updateActionButtons();
 });
-
-
-
-// Key Changes
-// Validation Message Function: Added a function displayValidationMessage to show error messages in the validationMessageDiv.
-// Validation Messages: Incorporated validation messages for various actions such as starting the game, betting, and drawing cards. This ensures that users receive feedback when they make mistakes.
-// Make sure to add the validationMessageDiv element in your HTML to display these messages. This will enhance the user experience by providing clear feedback on errors and validation issues.

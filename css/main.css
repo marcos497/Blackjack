@@ -1,9 +1,20 @@
 body {
    font-family: Arial, sans-serif;
+   margin: 0;
+   padding: 0;
+   box-sizing: border-box;
+}
+
+#game-container {
+   max-width: 800px;
+   margin: 0 auto;
+   padding: 20px;
+   text-align: center;
 }
 
 #landing-page, #intro-page, #betting-page, #game-page {
    text-align: center;
+   margin: 20px;
 }
 
 .player-info, .player-bet {
@@ -33,4 +44,15 @@ body {
    color: red;
    font-weight: bold;
    margin: 10px 0;
+}
+
+button {
+   padding: 10px 20px;
+   font-size: 16px;
+   cursor: pointer;
+   margin: 5px;
+}
+
+button:hover {
+   background-color: #f0f0f0;
 }
