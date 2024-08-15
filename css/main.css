@@ -28,3 +28,9 @@ body {
 .card.back {
    background-color: #000;
 }
+
+.validation-message {
+   color: red;
+   font-weight: bold;
+   margin: 10px 0;
+}

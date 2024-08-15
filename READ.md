@@ -52,3 +52,22 @@ In addition to, another very helpful tool to understand code language and good f
 ## License
 
 Include a license if applicable.
+
+
+
+<!-- FOR DEVELOPER  -->
+# DEV NOTES 
+Key Updates:
+Disable Betting Inputs and Submit Button Initially: Added disabled attribute to betting inputs and submit button when displaying the betting table.
+
+Enable Betting Inputs and Submit Button: Added a validateBets function that checks the validity of the entered bets and enables the submit button if all bets are valid.
+
+Event Listener for Betting Inputs: Added an input event listener on the betting table to validate bets as they are entered.
+
+This ensures that players cannot proceed with invalid bets and that they must enter valid bet amounts before continuing with the game.
+
+
+
+
+
+
