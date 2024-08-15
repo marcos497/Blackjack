@@ -2,57 +2,48 @@ body {
    font-family: Arial, sans-serif;
    margin: 0;
    padding: 0;
-   box-sizing: border-box;
-}
-
-#game-container {
-   max-width: 800px;
-   margin: 0 auto;
-   padding: 20px;
-   text-align: center;
+   background-color: #f4f4f4;
 }
 
 #landing-page, #intro-page, #betting-page, #game-page {
-   text-align: center;
-   margin: 20px;
-}
-
-.player-info, .player-bet {
-   margin-bottom: 20px;
-}
-
-.card {
-   box-sizing: border-box;
-   display: inline-block;
-   margin: 5px;
-   cursor: pointer;
-   width: 60px;
-   height: 90px;
-   background-color: #fff;
-   border-radius: 0.2em;
-   border: 1px solid #c3c3c3;
-   background-repeat: no-repeat;
-   background-position: center center;
-   background-size: contain;
-}
-
-.card.back {
-   background-color: #000;
-}
-
-.validation-message {
-   color: red;
-   font-weight: bold;
-   margin: 10px 0;
+   padding: 20px;
 }
 
 button {
+   background-color: #4CAF50;
+   color: white;
+   border: none;
    padding: 10px 20px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
    font-size: 16px;
+   margin: 10px 2px;
    cursor: pointer;
-   margin: 5px;
+   border-radius: 4px;
 }
 
-button:hover {
-   background-color: #f0f0f0;
+input[type="number"] {
+   padding: 10px;
+   font-size: 16px;
+}
+
+.player-hand img, .dealer-hand img {
+   width: 50px;
+   height: auto;
+   margin: 2px;
+}
+
+#game-table, #dealer-cards {
+   margin-top: 20px;
+}
+
+#game-log {
+   margin-top: 20px;
+   font-size: 18px;
+}
+
+#validation-message {
+   color: red;
+   font-weight: bold;
 }

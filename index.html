@@ -3,51 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blackjack Game</title>
-    <link rel="stylesheet" href="css/main.css">
+    <title>Blackjack 21</title>
+    <link rel="stylesheet" href="main.css">
 </head>
 <body>
-    <!-- Game container -->
-    <div id="game-container">
-        <!-- Landing page -->
-        <div id="landing-page">
-            <button id="start-button">Start Game</button>
-        </div>
-
-        <!-- Intro page for player setup -->
-        <div id="intro-page" style="display:none;">
-            <h2>Enter Number of Players</h2>
-            <input type="number" id="num-players" min="1" max="2">
-            <button id="submit-players">Submit</button>
-            <div id="player-names"></div>
-        </div>
-
-        <!-- Betting page -->
-        <div id="betting-page" style="display:none;">
-            <h2>Place Your Bets</h2>
-            <div id="betting-table"></div>
-            <button id="submit-bets">Submit Bets</button>
-        </div>
-
-        <!-- Game page -->
-        <div id="game-page" style="display:none;">
-            <h2>Game</h2>
-            <div id="dealer-cards">
-                <div class="card back"></div> <!-- Face-down card -->
-            </div>
-            <div id="game-table"></div>
-            <div id="game-log"></div>
-            <div id="action-buttons" style="display:none;">
-                <button id="hit-button">Hit</button>
-                <button id="stand-button">Stand</button>
-            </div>
-            <div id="restart" style="display:none;">
-                <button id="restart-button">Restart Game</button>
-            </div>
-            <div id="validation-message" class="validation-message"></div>
-        </div>
+    <div id="landing-page">
+        <h1>Welcome to Blackjack 21</h1>
+        <button id="start-button">Start Game</button>
     </div>
 
-    <script src="js/main.js"></script>
+    <div id="intro-page" style="display: none;">
+        <h2>Enter Number of Players</h2>
+        <input type="number" id="num-players" min="1" max="3">
+        <button id="submit-players">Submit</button>
+        <div id="player-names"></div>
+    </div>
+
+    <div id="betting-page" style="display: none;">
+        <h2>Place Your Bets</h2>
+        <div id="betting-table"></div>
+        <button id="submit-bets" disabled>Submit Bets</button>
+    </div>
+
+    <div id="game-page" style="display: none;">
+        <h2>Game in Progress</h2>
+        <div id="game-table"></div>
+        <div id="dealer-cards"></div>
+        <div id="action-buttons"></div>
+        <div id="game-log"></div>
+        <div id="validation-message"></div>
+        <button id="restart-button" style="display: none;">Restart Game</button>
+    </div>
+
+    <script src="main.js"></script>
 </body>
 </html>

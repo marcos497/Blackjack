@@ -14,18 +14,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const bettingTableDiv = document.getElementById('betting-table');
     const submitBetsButton = document.getElementById('submit-bets');
     const gameTableDiv = document.getElementById('game-table');
+    const dealerCardsDiv = document.getElementById('dealer-cards');
     const gameLogDiv = document.getElementById('game-log');
     const validationMessageDiv = document.getElementById('validation-message');
 
     let players = [];
-    let dealer = { name: 'Dealer', balance: 20000, cards: [] }; // Dealer starts with $20,000
+    let dealer = { name: 'Dealer', balance: 20000, cards: [], hasStood: false, hasBusted: false }; // Dealer starts with $20,000
     let deckId = '';
     let gameOver = false;
     let currentPlayerIndex = 0;
+    let showValidationMessages = true; // Flag to control validation message display
+
+    // Define card images
+    const cardImages = {
+        'AS': 'path/to/images/AS.svg',
+        '2S': 'path/to/images/2S.svg',
+        // Add all card images
+        'KH': 'path/to/images/KH.svg',
+        'QD': 'path/to/images/QD.svg',
+        // Continue for all cards...
+    };
 
     // Function to display validation messages
     function displayValidationMessage(message) {
-        validationMessageDiv.innerHTML = message;
+        if (showValidationMessages) {
+            validationMessageDiv.innerHTML = message;
+        }
+    }
+
+    // Function to check if the game should end and offer restart
+    function checkGameEnd() {
+        const dealerValue = calculateHandValue(dealer.cards);
+        const playerHasBlackjack = players.some(player => calculateHandValue(player.cards) === 21);
+        if (playerHasBlackjack || dealerValue === 21) {
+            displayValidationMessage('A player or dealer has 21! Would you like to restart the game?');
+            restartButton.style.display = 'block';
+            actionButtonsDiv.style.display = 'none';
+        } else if (players.every(player => player.hasStood || player.hasBusted)) {
+            dealerTurn();
+        }
     }
 
     // Start button functionality to display the introduction page
@@ -33,13 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('landing-page').style.display = 'none';
         introPage.style.display = 'block';
         validationMessageDiv.innerHTML = ''; // Clear validation messages
+        showValidationMessages = true; // Enable validation messages
     });
 
     // Submit player names and start the betting phase
     submitPlayersButton.addEventListener('click', () => {
         const numPlayers = parseInt(numPlayersInput.value);
-        if (isNaN(numPlayers) || numPlayers < 1 || numPlayers > 2) { // Limit to 1 or 2 players
-            displayValidationMessage('Please enter a number between 1 and 2.');
+        if (isNaN(numPlayers) || numPlayers < 1 || numPlayers > 3) { // Limit to 1 to 3 players
+            displayValidationMessage('Please enter a number between 1 and 3.');
             return;
         }
 
@@ -51,6 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
             input.type = 'text';
             input.id = `player-${i}`;
             input.placeholder = `Player ${i} Name`;
+            input.addEventListener('input', () => {
+                validationMessageDiv.innerHTML = ''; // Clear message when user inputs valid name
+            });
             playerNamesDiv.appendChild(input);
             playerNamesDiv.appendChild(document.createElement('br'));
         }
@@ -91,287 +122,193 @@ document.addEventListener('DOMContentLoaded', () => {
     function showBettingTable() {
         bettingTableDiv.innerHTML = '';
         players.forEach((player, index) => {
-            const playerDiv = document.createElement('div');
-            playerDiv.className = 'player-bet';
-            playerDiv.innerHTML = `
-                <h3>${player.name}</h3>
-                <input type="number" id="bet-${index}" placeholder="Bet Amount" min="1" max="${player.balance}">
-                <span>Balance: ${player.balance}</span>
-            `;
-            bettingTableDiv.appendChild(playerDiv);
+            const div = document.createElement('div');
+            div.innerHTML = `<label>${player.name}: </label>`;
+            const betInput = document.createElement('input');
+            betInput.type = 'number';
+            betInput.min = '0';
+            betInput.placeholder = 'Bet amount';
+            betInput.id = `bet-${index}`;
+            div.appendChild(betInput);
+            bettingTableDiv.appendChild(div);
         });
-
-        // Disable the submit bets button initially
-        submitBetsButton.disabled = true;
+        submitBetsButton.disabled = false;
     }
-
-    // Validate and enable betting inputs
-    function validateBets() {
-        let validBets = true;
-        players.forEach((player, index) => {
-            const betAmount = parseInt(document.getElementById(`bet-${index}`).value);
-            if (isNaN(betAmount) || betAmount <= 0 || betAmount > player.balance) {
-                validBets = false;
-            }
-        });
-
-        // Enable or disable the submit button based on validity
-        submitBetsButton.disabled = !validBets;
-    }
-
-    // Handle input events for bet validation
-    bettingTableDiv.addEventListener('input', validateBets);
 
     // Submit bets and start the game
     submitBetsButton.addEventListener('click', () => {
-        let validBets = true;
+        let allBetsPlaced = true;
         players.forEach((player, index) => {
-            const betAmount = parseInt(document.getElementById(`bet-${index}`).value);
-            if (isNaN(betAmount) || betAmount <= 0 || betAmount > player.balance) {
-                displayValidationMessage(`Invalid bet amount for ${player.name}. Please enter a valid bet.`);
-                validBets = false;
-            } else {
-                player.bet = betAmount;
-                player.balance -= betAmount;
+            const betInput = document.getElementById(`bet-${index}`);
+            const bet = parseInt(betInput.value);
+            if (isNaN(bet) || bet <= 0 || bet > player.balance) {
+                allBetsPlaced = false;
+                displayValidationMessage(`Invalid bet for ${player.name}. Please enter a valid amount.`);
+                return;
             }
+            player.bet = bet;
+            player.balance -= bet;
         });
 
-        if (!validBets) return;
-
-        bettingPage.style.display = 'none';
-        gamePage.style.display = 'block';
-        startGame();
+        if (allBetsPlaced) {
+            startGame();
+        }
     });
 
-    // Start the game by fetching a new deck from the API
-    function startGame() {
-        fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
-            .then(response => response.json())
-            .then(data => {
-                deckId = data.deck_id; // Store the deck ID for future API calls
-                drawInitialCards();
-            })
-            .catch(error => {
-                displayValidationMessage(`Error fetching deck: ${error.message}`);
-            });
+    // Start the game by shuffling the deck and dealing cards
+    async function startGame() {
+        try {
+            const deckResponse = await fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1');
+            const deckData = await deckResponse.json();
+            deckId = deckData.deck_id;
+
+            await Promise.all(players.map(player => dealCard(player)));
+            await dealCard(dealer);
+            await dealCard(dealer);
+
+            updateGameDisplay();
+            bettingPage.style.display = 'none';
+            gamePage.style.display = 'block';
+            actionButtonsDiv.style.display = 'block';
+        } catch (error) {
+            console.error('Error starting game:', error);
+            displayValidationMessage('Error starting game. Please try again.');
+        }
     }
 
-    // Draw initial cards for players and dealer
-    function drawInitialCards() {
-        players.forEach(player => {
-            drawCardForPlayer(player);
-            drawCardForPlayer(player);
-        });
-        drawCardForDealer(true); // Dealer's first card face-down
-        drawCardForDealer(false); // Dealer's second card face-up
+    // Deal a card to a given participant
+    async function dealCard(participant) {
+        try {
+            const cardResponse = await fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`);
+            const cardData = await cardResponse.json();
+            const card = cardData.cards[0];
+            participant.cards.push(card);
+            if (participant === dealer && dealer.cards.length === 2) {
+                dealer.cards[1].isFaceDown = true; // Dealer's second card is face-down initially
+            }
+            updateGameDisplay();
+        } catch (error) {
+            console.error('Error dealing card:', error);
+            displayValidationMessage('Error dealing card. Please try again.');
+        }
     }
 
-    // Function to draw cards for a player
-    function drawCardForPlayer(player, isHit = false) {
-        fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`)
-            .then(response => response.json())
-            .then(data => {
-                player.cards.push(data.cards[0]);
-                if (isHit) {
-                    updateUI(); // Update the UI after each hit
-                    if (calculateHandValue(player.cards) > 21) {
-                        player.hasBusted = true;
-                        displayValidationMessage(`${player.name} has busted!`);
-                        currentPlayerIndex++;
-                        if (currentPlayerIndex >= players.length) {
-                            dealerTurn();
-                        }
-                    }
-                }
-            })
-            .catch(error => {
-                displayValidationMessage(`Error drawing cards for ${player.name}: ${error.message}`);
-            });
-    }
-
-    // Function to draw cards for the dealer
-    function drawCardForDealer(faceDown = false) {
-        fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`)
-            .then(response => response.json())
-            .then(data => {
-                dealer.cards.push(data.cards[0]);
-                updateUI();
-            })
-            .catch(error => {
-                displayValidationMessage(`Error drawing cards for the dealer: ${error.message}`);
-            });
-    }
-
-    // Function to reveal the dealer's hidden card
-    function revealDealerCard() {
-        dealer.cards[0].image = ''; // Change this to fetch the actual card image
-        updateUI();
-    }
-
-    // Function to update the game UI based on current game state
-    function updateUI() {
-        gameTableDiv.innerHTML = '';
-        players.forEach((player, index) => {
-            const playerDiv = document.createElement('div');
-            playerDiv.className = 'player-hand';
-            playerDiv.innerHTML = `
-                <h3>${player.name}</h3>
-                <div class="cards">
-                    ${player.cards.map(card => `<img src="${card.image}" alt="${card.code}" class="card">`).join('')}
-                </div>
-                <p>Hand Value: ${calculateHandValue(player.cards)}</p>
-                <p>Balance: ${player.balance}</p>
-            `;
-
-            // Add Hit and Stand buttons for each player
-            const playerActions = document.createElement('div');
-            playerActions.className = 'player-actions';
-            
-            hitButton.textContent = 'Hit';
-            hitButton.id = 'hit-button';
-            hitButton.className = 'action-button';
-            hitButton.addEventListener('click', () => {
-                if (!gameOver && !player.hasBusted && !player.hasStood) {
-                    drawCardForPlayer(player, true);
-                }
-            });
-
-            standButton.textContent = 'Stand';
-            standButton.id = 'stand-button';
-            standButton.className = 'action-button';
-            standButton.addEventListener('click', () => {
-                if (!gameOver && !player.hasBusted && !player.hasStood) {
-                    player.hasStood = true;
-                    currentPlayerIndex++;
-                    if (currentPlayerIndex >= players.length) {
-                        dealerTurn();
-                    }
-                    updateActionButtons();
-                }
-            });
-
-            playerActions.appendChild(hitButton);
-            playerActions.appendChild(standButton);
-            playerDiv.appendChild(playerActions);
-
-            gameTableDiv.appendChild(playerDiv);
-        });
-
-        // Update dealer's hand
-        const dealerDiv = document.createElement('div');
-        dealerDiv.className = 'dealer-hand';
-        dealerDiv.innerHTML = `
-            <h3>${dealer.name}</h3>
-            <div class="cards">
-                ${dealer.cards.map(card => `<img src="${card.image}" alt="${card.code}" class="card">`).join('')}
-            </div>
-            <p>Hand Value: ${calculateHandValue(dealer.cards)}</p>
-        `;
-        gameTableDiv.appendChild(dealerDiv);
-
-        updateActionButtons();
-    }
-
-    // Function to calculate the total value of a hand
+    // Calculate the value of a hand
     function calculateHandValue(cards) {
         let value = 0;
-        let aceCount = 0;
+        let hasAce = false;
         cards.forEach(card => {
-            if (['KING', 'QUEEN', 'JACK'].includes(card.value)) {
+            if (card.value === 'ACE') {
+                hasAce = true;
+                value += 1;
+            } else if (['KING', 'QUEEN', 'JACK'].includes(card.value)) {
                 value += 10;
-            } else if (card.value === 'ACE') {
-                aceCount++;
-                value += 11;
             } else {
                 value += parseInt(card.value);
             }
         });
-
-        while (value > 21 && aceCount > 0) {
-            value -= 10;
-            aceCount--;
+        if (hasAce && value + 10 <= 21) {
+            value += 10; // Consider ACE as 11 if it doesn't bust the hand
         }
-
         return value;
     }
 
-    // Function to update the visibility and functionality of action buttons
-    function updateActionButtons() {
-        if (players.length > 0) {
-            const currentPlayer = players[currentPlayerIndex];
-            if (currentPlayer.hasBusted || currentPlayer.hasStood) {
-                hitButton.disabled = true;
-                standButton.disabled = true;
-            } else {
-                hitButton.disabled = false;
-                standButton.disabled = false;
-            }
-        } else {
-            hitButton.disabled = true;
-            standButton.disabled = true;
-        }
+    // Update the game display with current card and player information
+    function updateGameDisplay() {
+        gameTableDiv.innerHTML = '';
+        dealerCardsDiv.innerHTML = 'Dealer\'s Cards:<br>';
+        dealer.cards.forEach((card, index) => {
+            dealerCardsDiv.innerHTML += `<img src="${cardImages[card.code]}" alt="${card.value} of ${card.suit}">`;
+        });
 
-        if (gameOver) {
-            hitButton.disabled = true;
-            standButton.disabled = true;
-            restartButton.disabled = false;
-        }
+        players.forEach(player => {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-hand';
+            playerDiv.innerHTML = `<h3>${player.name}</h3>`;
+            player.cards.forEach(card => {
+                playerDiv.innerHTML += `<img src="${cardImages[card.code]}" alt="${card.value} of ${card.suit}">`;
+            });
+            gameTableDiv.appendChild(playerDiv);
+        });
+
+        // Check for win/loss conditions after dealing
+        checkGameEnd();
     }
 
-    // Handle player actions (hit and stand)
+    // Dealer's turn logic
+    function dealerTurn() {
+        actionButtonsDiv.style.display = 'none';
+        let dealerValue = calculateHandValue(dealer.cards);
+        while (dealerValue < 17) {
+            dealCard(dealer).then(() => {
+                dealerValue = calculateHandValue(dealer.cards);
+                updateGameDisplay();
+            });
+        }
+        determineWinners();
+    }
+
+    // Determine game outcomes and notify players
+    function determineWinners() {
+        const dealerValue = calculateHandValue(dealer.cards);
+        players.forEach(player => {
+            const playerValue = calculateHandValue(player.cards);
+            if (player.hasBusted) {
+                gameLogDiv.innerHTML += `<p>${player.name} busted and lost their bet.</p>`;
+            } else if (dealer.hasBusted || playerValue > dealerValue) {
+                player.balance += player.bet * 2; // Win double the bet
+                gameLogDiv.innerHTML += `<p>${player.name} wins!</p>`;
+            } else if (playerValue === dealerValue) {
+                player.balance += player.bet; // Push, return bet
+                gameLogDiv.innerHTML += `<p>${player.name} pushes.</p>`;
+            } else {
+                gameLogDiv.innerHTML += `<p>${player.name} loses their bet.</p>`;
+            }
+        });
+        showRestartButton();
+    }
+
+    // Display the restart button
+    function showRestartButton() {
+        restartButton.style.display = 'block';
+    }
+
+    // Event listeners for Hit and Stand actions
+    hitButton.textContent = 'Hit';
     hitButton.addEventListener('click', () => {
-        if (!gameOver) {
-            const currentPlayer = players[currentPlayerIndex];
-            drawCardForPlayer(currentPlayer, true);
+        if (!gameOver && !players[currentPlayerIndex].hasBusted) {
+            dealCard(players[currentPlayerIndex]).then(() => {
+                const playerValue = calculateHandValue(players[currentPlayerIndex].cards);
+                if (playerValue > 21) {
+                    players[currentPlayerIndex].hasBusted = true;
+                    displayValidationMessage(`${players[currentPlayerIndex].name} busted!`);
+                }
+                updateGameDisplay();
+                checkGameEnd();
+            });
         }
     });
-
+    standButton.textContent = 'Stand';
     standButton.addEventListener('click', () => {
-        if (!gameOver) {
-            const currentPlayer = players[currentPlayerIndex];
-            currentPlayer.hasStood = true;
+        if (!gameOver && !players[currentPlayerIndex].hasBusted) {
+            players[currentPlayerIndex].hasStood = true;
             currentPlayerIndex++;
             if (currentPlayerIndex >= players.length) {
                 dealerTurn();
+            } else {
+                updateGameDisplay();
             }
-            updateActionButtons();
         }
     });
-
-    // Function to handle the dealer's turn
-    function dealerTurn() {
-        revealDealerCard();
-        while (calculateHandValue(dealer.cards) < 17) {
-            drawCardForDealer();
-        }
-        evaluateGameResults();
-        gameOver = true;
-        updateUI();
-    }
-
-    // Function to evaluate game results and determine winners
-    function evaluateGameResults() {
-        const dealerValue = calculateHandValue(dealer.cards);
-        players.forEach(player => {
-            if (player.hasBusted) {
-                gameLogDiv.innerHTML += `<p>${player.name} lost their bet.</p>`;
-            } else if (dealerValue > 21 || calculateHandValue(player.cards) > dealerValue) {
-                gameLogDiv.innerHTML += `<p>${player.name} won their bet!</p>`;
-                player.balance += player.bet * 2; // Win double the bet amount
-            } else if (calculateHandValue(player.cards) < dealerValue) {
-                gameLogDiv.innerHTML += `<p>${player.name} lost their bet.</p>`;
-            } else {
-                gameLogDiv.innerHTML += `<p>${player.name} tied with the dealer.</p>`;
-                player.balance += player.bet; // Return the bet amount
-            }
-        });
-    }
 
     // Restart the game
     restartButton.addEventListener('click', () => {
         window.location.reload();
     });
 
-    // Update action buttons visibility and functionality on page load
-    updateActionButtons();
+    // Initialize the hit and stand buttons in the action buttons div
+    actionButtonsDiv.appendChild(hitButton);
+    actionButtonsDiv.appendChild(standButton);
+    actionButtonsDiv.style.display = 'none';
+
 });
